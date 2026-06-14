@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0d5c3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Azra-2026">
+  <title>Azra-2026</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-logo"><i class="ti ti-building-community"></i></div>
+    <h1 class="login-title">Azra-2026</h1>
+    <p class="login-sub">Azra Sahil Sitesi Yönetim Paneli</p>
+    <div class="login-form">
+      <div id="login-error" class="error-msg" style="display:none">Kullanıcı adı veya şifre hatalı.</div>
+      <div class="input-group"><label>Kullanıcı Adı</label><input id="inp-user" type="text" placeholder="kullanıcı adınız" autocomplete="off" autocapitalize="none"></div>
+      <div class="input-group"><label>Şifre</label>
+        <div style="position:relative">
+          <input id="inp-pass" type="password" placeholder="şifreniz">
+          <button class="pass-toggle" onclick="togglePass()" type="button"><i class="ti ti-eye" id="eye-icon"></i></button>
+        </div>
+      </div>
+      <button class="btn primary" onclick="doLogin()"><i class="ti ti-login"></i> Giriş Yap</button>
+    </div>
+    <p class="login-version">v6.0 — Azra Sahil Sitesi · 2026</p>
+  </div>
+</div>
+
+<!-- ANA UYGULAMA -->
+<div id="screen-main" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">A</div>
+    <div class="topbar-title">Azra Sahil Sitesi</div>
+    <div id="topbar-badge" class="role-badge"></div>
+    <button class="icon-btn" onclick="doLogout()"><i class="ti ti-logout"></i></button>
+  </div>
+
+  <div id="tab-content">
+
+    <!-- ANA SAYFA -->
+    <div id="tab-home" class="tab-panel active">
+      <div class="content">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label" id="s-ay-label">Bu Ay Tahsilat</div><div class="stat-value green" id="s-tahsilat">0 ₺</div></div>
+          <div class="stat-card"><div class="stat-label">Toplam Daire</div><div class="stat-value">58</div></div>
+          <div class="stat-card"><div class="stat-label">Toplam Bakiye Borç</div><div class="stat-value red" id="s-borc">0 ₺</div></div>
+          <div class="stat-card"><div class="stat-label">Kasa Bakiyesi</div><div class="stat-value green" id="s-kasa">0 ₺</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><span class="section-title" id="odeme-ay-label">AİDAT</span><span style="font-size:11px;color:#888;margin-left:6px">ödeme durumu</span></div>
+            <span id="odeme-oran" class="badge green-badge"></span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="odeme-progress"></div></div>
+          <div class="progress-labels"><span id="pr-odendi">0 ödedi</span><span id="pr-bekleyen">0 bekliyor</span></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="section-title">Son İşlemler</span></div>
+          <div id="son-islemler"></div>
+        </div>
+        <div class="page-bottom"></div>
+      </div>
+    </div>
+
+    <!-- DAİRELER -->
+    <div id="tab-daireler" class="tab-panel">
+      <div class="content">
+        <div class="search-bar">
+          <i class="ti ti-search"></i>
+          <input type="text" id="daire-search" placeholder="Daire no veya sakin ara..." oninput="filterDaireler()">
+          <button class="icon-btn-sm" onclick="clearSearch()"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="filter-row">
+          <button class="filter-chip active" onclick="setFilter('hepsi',this)">Hepsi</button>
+          <button class="filter-chip" onclick="setFilter('borclu',this)">Borçlu</button>
+          <button class="filter-chip" onclick="setFilter('odendi',this)">Ödenmiş</button>
+          <button class="filter-chip" onclick="setFilter('kiraci',this)">Kiracı</button>
+          <button class="filter-chip" onclick="setFilter('evsahibi',this)">Ev Sahibi</button>
+        </div>
+        <div id="daire-list"></div>
+        <div class="page-bottom"></div>
+      </div>
+    </div>
+
+    <!-- İŞLEMLER -->
+    <div id="tab-islemler" class="tab-panel">
+      <div class="content">
+        <div class="sub-tab-bar">
+          <button class="sub-tab active" onclick="switchSubTab('gelirler',this)">Gelirler</button>
+          <button class="sub-tab" onclick="switchSubTab('giderler',this)">Giderler</button>
+          <button class="sub-tab" onclick="switchSubTab('kasa',this)">Kasa</button>
+          <button class="sub-tab" onclick="switchSubTab('hizmet',this)">Hizmet</button>
+        </div>
+        <!-- GELİRLER -->
+        <div id="panel-gelirler">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button class="btn green" style="flex:1" onclick="openModal('modal-gelir')"><i class="ti ti-trending-up"></i> Yeni Gelir</button>
+            <button class="btn" style="background:#e3f0ff;color:#1565c0;border-color:#bad3f5;flex:1" onclick="openTopluGelir()"><i class="ti ti-list-check"></i> Toplu Giriş</button>
+            <button onclick="scrollToTop('gelir')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-up" style="color:#0d5c3a;font-size:16px"></i></button>
+            <button onclick="scrollToBottom('gelir')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-down" style="color:#0d5c3a;font-size:16px"></i></button>
+          </div>
+          <div class="filter-row">
+            <button class="filter-chip gelir-filtre-chip active" onclick="gelirAyFiltre('hepsi',this)">Hepsi</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('OCAK',this)">Oca</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('ŞUBAT',this)">Şub</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('MART',this)">Mar</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('NİSAN',this)">Nis</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('MAYIS',this)">May</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('HAZİRAN',this)">Haz</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('TEMMUZ',this)">Tem</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('AĞUSTOS',this)">Ağu</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('EYLÜL',this)">Eyl</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('EKİM',this)">Eki</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('KASIM',this)">Kas</button>
+            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('ARALIK',this)">Ara</button>
+          </div>
+          <div id="gelir-list"></div>
+        </div>
+        <!-- GİDERLER -->
+        <div id="panel-giderler" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button class="btn danger" style="flex:1" onclick="openModal('modal-gider')"><i class="ti ti-trending-down"></i> Yeni Gider</button>
+            <button onclick="scrollToTop('gider')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-up" style="color:#0d5c3a;font-size:16px"></i></button>
+            <button onclick="scrollToBottom('gider')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-down" style="color:#0d5c3a;font-size:16px"></i></button>
+          </div>
+          <div class="filter-row">
+            <button class="filter-chip gider-filtre-chip active" onclick="giderAyFiltre('hepsi',this)">Hepsi</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('OCAK',this)">Oca</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('ŞUBAT',this)">Şub</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('MART',this)">Mar</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('NİSAN',this)">Nis</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('MAYIS',this)">May</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('HAZİRAN',this)">Haz</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('TEMMUZ',this)">Tem</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('AĞUSTOS',this)">Ağu</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('EYLÜL',this)">Eyl</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('EKİM',this)">Eki</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('KASIM',this)">Kas</button>
+            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('ARALIK',this)">Ara</button>
+          </div>
+          <div id="gider-list"></div>
+        </div>
+        <!-- KASA -->
+        <div id="panel-kasa" style="display:none"><div id="kasa-ozet"></div></div>
+        <!-- HİZMET -->
+        <div id="panel-hizmet" style="display:none">
+          <button class="btn green" style="margin-bottom:12px" onclick="openModal('modal-hs-ekle')"><i class="ti ti-plus"></i> Hizmet Sağlayıcı Ekle</button>
+          <div id="hs-list"></div>
+        </div>
+        <div class="page-bottom"></div>
+      </div>
+    </div>
+
+    <!-- PERSONEL -->
+    <div id="tab-puantaj" class="tab-panel">
+      <div class="content">
+        <div class="sub-tab-bar">
+          <button class="sub-tab active" onclick="switchPuantajTab('ozluk',this)">Özlük</button>
+          <button class="sub-tab" onclick="switchPuantajTab('puantaj',this)">Puantaj</button>
+        </div>
+        <div id="panel-ozluk">
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+              <div style="width:56px;height:56px;border-radius:14px;background:#0d5c3a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-user" style="color:#fff;font-size:28px"></i></div>
+              <div style="flex:1"><div id="personel-ad-label" style="font-size:17px;font-weight:700;color:#1a1a1a"></div><div id="personel-unvan-label" style="font-size:13px;color:#888"></div></div>
+              <button id="ozluk-duzenle-btn" onclick="ozlukDuzenle()" style="background:#e4f5ec;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;color:#0d5c3a;font-size:13px;font-weight:600;display:none"><i class="ti ti-pencil"></i> Düzenle</button>
+            </div>
+            <div class="section-title" style="margin-bottom:12px">Kişisel Bilgiler</div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-id-badge"></i> Ad Soyad</span><span class="ozluk-val" id="ov-adsoyad">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-fingerprint"></i> TC Kimlik No</span><span class="ozluk-val" id="ov-tc">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-cake"></i> Doğum Tarihi</span><span class="ozluk-val" id="ov-dogum">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-phone"></i> Telefon</span><span class="ozluk-val" id="ov-tel">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-map-pin"></i> Adres</span><span class="ozluk-val" id="ov-adres">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-mail"></i> E-posta</span><span class="ozluk-val" id="ov-eposta">—</span></div>
+            <div class="divider" style="margin:14px 0"></div>
+            <div class="section-title" style="margin-bottom:12px">İş Bilgileri</div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-briefcase"></i> Görev</span><span class="ozluk-val" id="ov-unvan">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-calendar-plus"></i> İşe Giriş</span><span class="ozluk-val" id="ov-giris">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-clock-hour4"></i> Çalışma Saati</span><span class="ozluk-val" id="ov-saat">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-coin"></i> Net Maaş</span><span class="ozluk-val" id="ov-maas">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-coin"></i> Brüt Maaş</span><span class="ozluk-val" id="ov-maas-brut">—</span></div>
+            <div class="divider" style="margin:14px 0"></div>
+            <div class="section-title" style="margin-bottom:12px">Banka / SGK</div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-building-bank"></i> Banka</span><span class="ozluk-val" id="ov-banka">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-credit-card"></i> IBAN</span><span class="ozluk-val" id="ov-iban" style="font-size:12px;word-break:break-all">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-shield-check"></i> SGK Sicil</span><span class="ozluk-val" id="ov-sgk">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-file-certificate"></i> Sigorta</span><span class="ozluk-val" id="ov-sigorta">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-heart-rate-monitor"></i> Sağlık Sig.</span><span class="ozluk-val" id="ov-saglik">—</span></div>
+            <div class="divider" style="margin:14px 0"></div>
+            <div class="section-title" style="margin-bottom:12px">Acil & Diğer</div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-emergency-bed"></i> Acil Kişi</span><span class="ozluk-val" id="ov-acil">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-phone-call"></i> Acil Tel</span><span class="ozluk-val" id="ov-acil-tel">—</span></div>
+            <div class="ozluk-row"><span class="ozluk-label"><i class="ti ti-notes"></i> Notlar</span><span class="ozluk-val" id="ov-notlar">—</span></div>
+          </div>
+          <div class="page-bottom"></div>
+        </div>
+        <div id="panel-puantaj" style="display:none">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <button onclick="puantajAyDegistir(-1)" style="background:#f0f4f1;border-radius:8px;padding:8px 12px;border:none;cursor:pointer"><i class="ti ti-chevron-left" style="color:#0d5c3a;font-size:20px"></i></button>
+              <div id="puantaj-ay-baslik" style="font-size:16px;font-weight:700;color:#1a1a1a"></div>
+              <button onclick="puantajAyDegistir(1)" style="background:#f0f4f1;border-radius:8px;padding:8px 12px;border:none;cursor:pointer"><i class="ti ti-chevron-right" style="color:#0d5c3a;font-size:20px"></i></button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+              <div style="background:#e4f5ec;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#0d5c3a" id="p-stat-calisma">0</div><div style="font-size:10px;color:#0d5c3a;font-weight:600">Çalışma</div></div>
+              <div style="background:#e3f0ff;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#1565c0" id="p-stat-pazar">0</div><div style="font-size:10px;color:#1565c0;font-weight:600">Pazar</div></div>
+              <div style="background:#f3e8ff;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#7b1fa2" id="p-stat-rt">0</div><div style="font-size:10px;color:#7b1fa2;font-weight:600">Res.Tatil</div></div>
+              <div style="background:#fff8e1;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#b8860b" id="p-stat-yi">0</div><div style="font-size:10px;color:#b8860b;font-weight:600">Yıl.İzin</div></div>
+              <div style="background:#fde8e8;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#c0392b" id="p-stat-iz">0</div><div style="font-size:10px;color:#c0392b;font-weight:600">İzin</div></div>
+              <div style="background:#fde8e8;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#c0392b" id="p-stat-rp">0</div><div style="font-size:10px;color:#c0392b;font-weight:600">Rapor</div></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+              <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:#e4f5ec;color:#0d5c3a;font-weight:600">X Çalıştı</span>
+              <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:#e3f0ff;color:#1565c0;font-weight:600">P Pazar</span>
+              <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:#f3e8ff;color:#7b1fa2;font-weight:600">RT Tatil</span>
+              <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:#fff8e1;color:#b8860b;font-weight:600">Yİ Yıl.İzin</span>
+              <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:#fde8e8;color:#c0392b;font-weight:600">İZ İzin</span>
+              <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:#fde8e8;color:#c0392b;font-weight:600">RP Rapor</span>
+            </div>
+            <p style="font-size:11px;color:#aaa;margin-bottom:12px">Güne dokunun, kod sırayla döner.</p>
+            <div id="puantaj-grid" class="puantaj-grid"></div>
+          </div>
+          <div class="page-bottom"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPORLAR -->
+    <div id="tab-raporlar" class="tab-panel">
+      <div class="content">
+        <div class="card" style="margin-bottom:10px">
+          <div class="section-title" style="margin-bottom:10px">Rapor Ayı Seç</div>
+          <div class="filter-row">
+            <button class="filter-chip rapor-ay-chip active" onclick="raporAySecimi('OCAK',this)">Oca</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('ŞUBAT',this)">Şub</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('MART',this)">Mar</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('NİSAN',this)">Nis</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('MAYIS',this)">May</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('HAZİRAN',this)">Haz</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('TEMMUZ',this)">Tem</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('AĞUSTOS',this)">Ağu</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('EYLÜL',this)">Eyl</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('EKİM',this)">Eki</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('KASIM',this)">Kas</button>
+            <button class="filter-chip rapor-ay-chip" onclick="raporAySecimi('ARALIK',this)">Ara</button>
+          </div>
+        </div>
+        <div class="card" id="rapor-card">
+          <div class="rapor-header">
+            <div><div class="rapor-title">Azra Sahil Sitesi</div><div class="rapor-sub" id="rapor-tarih">2026 Yönetim Raporu</div></div>
+            <div class="rapor-logo">A26</div>
+          </div>
+          <div class="section-title" style="margin-bottom:10px">Aylık Kasa Özeti</div>
+          <div id="rapor-kasa-table"></div>
+          <div class="divider"></div>
+          <div class="section-title" style="margin-bottom:10px">Bakiye Borç Dökümü</div>
+          <div id="rapor-borc-table"></div>
+          <div class="divider"></div>
+          <div id="rapor-ay-detay"></div>
+        </div>
+        <div class="action-stack">
+          <button class="btn green" onclick="indirRapor('html')"><i class="ti ti-download"></i> PDF / JPG İndir</button>
+          <button class="btn wa" onclick="raporPaylas()"><i class="ti ti-brand-whatsapp"></i> WhatsApp Grubuna Gönder</button>
+          <button class="btn blue" onclick="raporYayinla()"><i class="ti ti-world"></i> Siteye Yayınla</button>
+        </div>
+        <div class="page-bottom"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottomnav">
+    <button class="nav-item active" id="nav-home" onclick="switchTab('home')"><i class="ti ti-home"></i><span>Ana Sayfa</span></button>
+    <button class="nav-item" id="nav-daireler" onclick="switchTab('daireler')"><i class="ti ti-building"></i><span>Daireler</span></button>
+    <button class="nav-item" id="nav-islemler" onclick="switchTab('islemler')"><i class="ti ti-receipt"></i><span>İşlemler</span></button>
+    <button class="nav-item" id="nav-puantaj" onclick="switchTab('puantaj')"><i class="ti ti-user-check"></i><span>Personel</span></button>
+    <button class="nav-item" id="nav-raporlar" onclick="switchTab('raporlar')"><i class="ti ti-chart-bar"></i><span>Raporlar</span></button>
+  </nav>
+  <button class="fab" id="fab" onclick="openFabMenu()" style="display:none"><i class="ti ti-plus"></i></button>
+</div>
+</div>
+
+<!-- ===== MODALLER ===== -->
+
+<!-- FAB MENU -->
+<div class="modal-overlay" id="modal-fab">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title">Yeni İşlem</h2>
+    <button class="btn green" onclick="closeModal('modal-fab');openModal('modal-gelir')"><i class="ti ti-trending-up"></i> Gelir Ekle</button>
+    <button class="btn" style="background:#e3f0ff;color:#1565c0;border-color:#bad3f5" onclick="closeModal('modal-fab');openTopluGelir()"><i class="ti ti-list-check"></i> Toplu Gelir Girişi</button>
+    <button class="btn danger" onclick="closeModal('modal-fab');openModal('modal-gider')"><i class="ti ti-trending-down"></i> Gider Ekle</button>
+    <button class="btn" style="background:#f3e8ff;color:#7b1fa2;border-color:#d4b8f0" onclick="closeModal('modal-fab');openModal('modal-hs-ekle')"><i class="ti ti-tools"></i> Hizmet Sağlayıcı Ekle</button>
+    <button class="btn" onclick="closeModal('modal-fab')">İptal</button>
+  </div>
+</div>
+
+<!-- GELİR EKLE -->
+<div class="modal-overlay" id="modal-gelir">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title" id="modal-gelir-title">Gelir Ekle</h2>
+    <div class="input-group"><label>İşlem Tarihi</label><input type="date" id="g-tarih"></div>
+    <div class="input-group"><label>Dönem</label>
+      <select id="g-donem"><option>OCAK</option><option>ŞUBAT</option><option>MART</option><option>NİSAN</option><option>MAYIS</option><option>HAZİRAN</option><option>TEMMUZ</option><option>AĞUSTOS</option><option>EYLÜL</option><option>EKİM</option><option>KASIM</option><option>ARALIK</option></select>
+    </div>
+    <div class="input-group"><label>Daire</label><select id="g-daire"><option value="">Seçiniz...</option></select></div>
+    <div class="input-group"><label>İşlem Türü</label>
+      <select id="g-tur" onchange="gTurChange()">
+        <option value="aidat">Aidat Tahsilatı (₺1.400)</option>
+        <option value="diger">Diğer Tahsilatlar (₺1.600)</option>
+        <option value="ozel">Özel Tutar</option>
+      </select>
+    </div>
+    <div class="input-group" id="g-tutar-group" style="display:none"><label>Tutar (₺)</label><input type="number" id="g-tutar" placeholder="0.00"></div>
+    <div class="input-group"><label>Not</label><input type="text" id="g-not" placeholder="Açıklama (isteğe bağlı)"></div>
+    <button class="btn primary" id="gelir-kaydet-btn" onclick="kaydetGelir()"><i class="ti ti-check"></i> Kaydet</button>
+    <button class="btn" onclick="closeModal('modal-gelir');resetGelirForm()">İptal</button>
+  </div>
+</div>
+
+<!-- TOPLU GELİR -->
+<div class="modal-overlay" id="modal-toplu-gelir">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title">Toplu Gelir Girişi</h2>
+    <div class="alert-info"><i class="ti ti-info-circle"></i> Ay ve daire seçip tek seferde çok sayıda tahsilat girebilirsiniz.</div>
+    <div class="input-group"><label>İşlem Tarihi</label><input type="date" id="tg-tarih"></div>
+    <div class="input-group"><label>İşlem Türü</label>
+      <select id="tg-tur">
+        <option value="aidat">Aidat Tahsilatı (₺1.400)</option>
+        <option value="diger">Diğer Tahsilatlar (₺1.600)</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Dönem Seç (birden fazla seçebilirsiniz)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="OCAK"> Ocak</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="ŞUBAT"> Şubat</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="MART"> Mart</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="NİSAN"> Nisan</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="MAYIS"> Mayıs</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="HAZİRAN"> Haziran</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="TEMMUZ"> Temmuz</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="AĞUSTOS"> Ağustos</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="EYLÜL"> Eylül</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="EKİM"> Ekim</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="KASIM"> Kasım</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="toplu-ay-cb" value="ARALIK"> Aralık</label>
+      </div>
+    </div>
+    <div class="input-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <label>Daireler</label>
+        <div style="display:flex;gap:8px">
+          <button onclick="topluHepsiniSec()" style="background:#e4f5ec;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#0d5c3a;cursor:pointer;font-weight:600">Tümünü Seç</button>
+          <button onclick="topluHepsiniKaldir()" style="background:#fdecea;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#c0392b;cursor:pointer;font-weight:600">Temizle</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#0d5c3a;font-weight:600;margin-bottom:6px" id="toplu-secim-sayisi">0 daire seçili</div>
+      <div id="toplu-daire-list" style="max-height:220px;overflow-y:auto;border:1px solid #e0e8e2;border-radius:10px;padding:8px 12px"></div>
+    </div>
+    <button class="btn primary" onclick="kaydetTopluGelir()"><i class="ti ti-check"></i> Toplu Kaydet</button>
+    <button class="btn" onclick="closeModal('modal-toplu-gelir')">İptal</button>
+  </div>
+</div>
+
+<!-- GİDER EKLE -->
+<div class="modal-overlay" id="modal-gider">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title" id="modal-gider-title">Gider Ekle</h2>
+    <div class="alert-info"><i class="ti ti-info-circle"></i> Gider o ayın kasasına otomatik yansır.</div>
+    <div class="input-group"><label>İşlem Tarihi</label><input type="date" id="gid-tarih"></div>
+    <div class="input-group"><label>Dönem</label>
+      <select id="gid-donem"><option>OCAK</option><option>ŞUBAT</option><option>MART</option><option>NİSAN</option><option>MAYIS</option><option>HAZİRAN</option><option>TEMMUZ</option><option>AĞUSTOS</option><option>EYLÜL</option><option>EKİM</option><option>KASIM</option><option>ARALIK</option></select>
+    </div>
+    <div class="input-group"><label>Muhattap / Firma</label><input type="text" id="gid-muhatap" placeholder="Ödeme yapılan kişi veya şirket"></div>
+    <div class="input-group"><label>Tutar (₺)</label><input type="number" id="gid-tutar" placeholder="0.00"></div>
+    <div class="input-group"><label>Kategori</label>
+      <select id="gid-kategori">
+        <optgroup label="PERSONEL GİDERLERİ">
+          <option>Maaş / Avans / İkramiye vs.</option>
+          <option>Diğer Muhtelif İşçilik Giderleri</option>
+          <option>Ek Hizmetler (Havuz Bakım vs.)</option>
+        </optgroup>
+        <optgroup label="ORTAK ALAN GİDERLERİ">
+          <option>Elektrik (Enerjisa)</option>
+          <option>Su (Meski)</option>
+          <option>İnternet</option>
+          <option>Diğer Ortak Alan Giderleri (Havuz İlaçlama vs.)</option>
+        </optgroup>
+        <optgroup label="YÖNETİM GİDERLERİ">
+          <option>Muhasebe Giderleri</option>
+          <option>Avukatlık Giderleri</option>
+          <option>Aylık Vergiler (SGK, Muhtasar, Damga Vergisi vs.)</option>
+          <option>Diğer Yönetim Giderleri (Noter, Banka Masrafı, Kırtasiye vs.)</option>
+        </optgroup>
+        <optgroup label="TEKNİK HİZMET GİDERLERİ">
+          <option>Jeneratör Tamir, Bakım Giderleri</option>
+          <option>Asansör Tamir, Bakım Giderleri</option>
+          <option>Diğer Çeşitli Hizmet Giderleri</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="input-group"><label>Not</label><input type="text" id="gid-aciklama" placeholder="Açıklama (isteğe bağlı)"></div>
+    <button class="btn primary" id="gider-kaydet-btn" onclick="kaydetGider()"><i class="ti ti-check"></i> Kaydet</button>
+    <button class="btn" onclick="closeModal('modal-gider');resetGiderForm()">İptal</button>
+  </div>
+</div>
+
+<!-- HİZMET SAĞLAYICI -->
+<div class="modal-overlay" id="modal-hs-ekle">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title">Hizmet Sağlayıcı Ekle</h2>
+    <div class="input-group"><label>Firma / Kişi Adı</label><input type="text" id="hs-ad" placeholder="Adı giriniz"></div>
+    <div class="input-group"><label>Kategori</label>
+      <select id="hs-kategori">
+        <option>Temizlik</option><option>Güvenlik</option><option>Elektrik</option>
+        <option>Su / Tesisat</option><option>Asansör Bakım</option><option>Jeneratör Bakım</option>
+        <option>Havuz Bakım</option><option>Bahçe</option><option>Muhasebe</option>
+        <option>Avukatlık</option><option>Diğer</option>
+      </select>
+    </div>
+    <div class="input-group"><label>Telefon</label><input type="tel" id="hs-tel" placeholder="05XX XXX XX XX"></div>
+    <div class="input-group"><label>IBAN</label><input type="text" id="hs-iban" placeholder="TR00 0000..."></div>
+    <div class="input-group"><label>Aylık Tutar (₺)</label><input type="number" id="hs-tutar" placeholder="0.00"></div>
+    <div class="input-group"><label>Not</label><input type="text" id="hs-not" placeholder="Açıklama"></div>
+    <button class="btn primary" onclick="hizmetSaglayiciEkle()"><i class="ti ti-check"></i> Kaydet</button>
+    <button class="btn" onclick="closeModal('modal-hs-ekle')">İptal</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-hs-ekstre"><div class="modal bottom-sheet" id="modal-hs-ekstre-inner"></div></div>
+
+<!-- DAİRE DÜZENLE -->
+<div class="modal-overlay" id="modal-daire-duzenle">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title"><span id="du-no">Daire</span> — Bilgi Güncelle</h2>
+    <div class="input-group"><label>Daire Sakini</label><input type="text" id="du-sakin" placeholder="Ad Soyad"></div>
+    <div class="input-group"><label>Sakin Telefonu</label><input type="tel" id="du-sakintl"></div>
+    <div class="input-group"><label>Kat Maliki</label><input type="text" id="du-malik" placeholder="Ad Soyad"></div>
+    <div class="input-group"><label>Malik Telefonu</label><input type="tel" id="du-maliktl"></div>
+    <div class="input-group"><label>Kullanım Durumu</label>
+      <select id="du-durum"><option value="">Belirtilmemiş</option><option value="EV SAHİBİ">Ev Sahibi</option><option value="KİRACI">Kiracı</option></select>
+    </div>
+    <button class="btn primary" id="du-kaydet-btn"><i class="ti ti-check"></i> Güncelle</button>
+    <button class="btn" onclick="closeModal('modal-daire-duzenle')">İptal</button>
+  </div>
+</div>
+
+<!-- ÖZLÜK DÜZENLE -->
+<div class="modal-overlay" id="modal-ozluk">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title">Personel Özlük Bilgileri</h2>
+    <div class="section-title" style="margin-bottom:10px">Kişisel Bilgiler</div>
+    <div class="input-group"><label>Ad Soyad</label><input type="text" id="oz-adsoyad"></div>
+    <div class="input-group"><label>TC Kimlik No</label><input type="text" id="oz-tc" maxlength="11"></div>
+    <div class="input-group"><label>Doğum Tarihi</label><input type="date" id="oz-dogum"></div>
+    <div class="input-group"><label>Telefon</label><input type="tel" id="oz-tel"></div>
+    <div class="input-group"><label>Adres</label><input type="text" id="oz-adres"></div>
+    <div class="input-group"><label>E-posta</label><input type="email" id="oz-eposta"></div>
+    <div class="section-title" style="margin:14px 0 10px">İş Bilgileri</div>
+    <div class="input-group"><label>Görev / Unvan</label><input type="text" id="oz-unvan"></div>
+    <div class="input-group"><label>İşe Giriş Tarihi</label><input type="date" id="oz-giris"></div>
+    <div class="input-group"><label>Çalışma Saatleri</label><input type="text" id="oz-saat" placeholder="08:00 - 17:00"></div>
+    <div class="input-group"><label>Net Maaş (₺)</label><input type="number" id="oz-maas"></div>
+    <div class="input-group"><label>Brüt Maaş (₺)</label><input type="number" id="oz-maas-brut"></div>
+    <div class="section-title" style="margin:14px 0 10px">Banka / SGK</div>
+    <div class="input-group"><label>Banka Adı</label><input type="text" id="oz-banka"></div>
+    <div class="input-group"><label>IBAN</label><input type="text" id="oz-iban" maxlength="32"></div>
+    <div class="input-group"><label>SGK Sicil No</label><input type="text" id="oz-sgk"></div>
+    <div class="input-group"><label>Sigorta Türü</label>
+      <select id="oz-sigorta"><option>4/a (SSK)</option><option>4/b (Bağ-Kur)</option><option>4/c (Emekli Sandığı)</option><option>Yok</option></select>
+    </div>
+    <div class="input-group"><label>Sağlık Sigortası</label><input type="text" id="oz-saglik"></div>
+    <div class="section-title" style="margin:14px 0 10px">Acil İletişim</div>
+    <div class="input-group"><label>Acil Kişi</label><input type="text" id="oz-acil"></div>
+    <div class="input-group"><label>Acil Telefon</label><input type="tel" id="oz-acil-tel"></div>
+    <div class="input-group"><label>Notlar</label><input type="text" id="oz-notlar"></div>
+    <button class="btn primary" onclick="ozlukKaydet()"><i class="ti ti-check"></i> Kaydet</button>
+    <button class="btn" onclick="closeModal('modal-ozluk')">İptal</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-daire"><div class="modal bottom-sheet" id="modal-daire-inner"></div></div>
+<div class="modal-overlay" id="modal-ekstre"><div class="modal bottom-sheet" id="modal-ekstre-inner"></div></div>
+<div id="toast" class="toast"></div>
+
+<script type="module" src="js/firebase-config.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

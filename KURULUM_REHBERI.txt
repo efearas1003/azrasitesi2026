@@ -1,0 +1,195 @@
+╔══════════════════════════════════════════════════════════════════╗
+║         AZRA-2026 YÖNETİM PANELİ — KURULUM REHBERİ             ║
+║              Azra Sahil Sitesi · Firebase + PWA                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Bu rehberi adım adım takip edin. Hiç teknik bilgi gerekmez.
+Her adım yaklaşık 2-3 dakika sürer. Toplam süre: ~20 dakika.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADIM 1: FİREBASE HESABI OLUŞTURMA (VERİTABANI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Tarayıcıda şu adrese gidin:
+   https://console.firebase.google.com
+
+2. Google hesabınızla giriş yapın
+   (Gmail hesabı yoksa önce oluşturun: gmail.com)
+
+3. "Proje oluştur" butonuna tıklayın
+
+4. Proje adını yazın: azra-sahil-sitesi
+   → "Devam"a tıklayın
+
+5. Google Analytics: "Şimdilik etkinleştirme" → "Proje oluştur"
+
+6. Proje oluşunca "Konsola devam et" tıklayın
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADIM 2: WEB UYGULAMASI EKLEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Firebase konsolunda sol üstteki ⚙️ (dişli) simgesine tıklayın
+   → "Proje ayarları"nı seçin
+
+2. Aşağı kaydırın → "Uygulamalarınız" bölümünde </> (web) simgesine tıklayın
+
+3. Uygulama takma adı: azra-panel
+   → "Bu uygulama için Firebase Hosting'i de ayarla" → İŞARETLEYİN
+   → "Uygulamayı kaydet"e tıklayın
+
+4. Karşınıza şöyle bir kod bloğu çıkacak:
+   ┌─────────────────────────────────────────────┐
+   │ const firebaseConfig = {                    │
+   │   apiKey: "AIzaSy...",                      │
+   │   authDomain: "azra-sahil...",              │
+   │   projectId: "azra-sahil...",               │
+   │   storageBucket: "azra-sahil...",           │
+   │   messagingSenderId: "123456...",           │
+   │   appId: "1:123456:web:abc..."              │
+   │ };                                          │
+   └─────────────────────────────────────────────┘
+
+5. Bu değerleri kopyalamak için bu sayfayı AÇIK bırakın (bir sonraki
+   adımda kullanacaksınız)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADIM 3: UYGULAMA KODUNA FİREBASE BİLGİLERİNİ GİRME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Bilgisayarınızda "azra2026" klasörünü açın
+
+2. "js" klasörünün içinde "firebase-config.js" dosyasını bulun
+
+3. Bu dosyayı Not Defteri ile açın:
+   Dosyaya sağ tıklayın → "Birlikte aç" → "Not Defteri"
+
+4. Şu satırları Firebase'den aldığınız değerlerle değiştirin:
+
+   ŞİMDİ:                         OLACAK (örnek):
+   "BURAYA_API_KEY"          →    "AIzaSyABC123..."
+   "BURAYA_AUTH_DOMAIN"      →    "azra-sahil.firebaseapp.com"
+   "BURAYA_PROJECT_ID"       →    "azra-sahil-sitesi"
+   "BURAYA_STORAGE_BUCKET"   →    "azra-sahil.appspot.com"
+   "BURAYA_MESSAGING_SENDER_ID" → "123456789"
+   "BURAYA_APP_ID"           →    "1:123:web:abc..."
+
+5. Kaydedin (Ctrl+S)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADIM 4: FİRESTORE VERİTABANI AÇMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Firebase konsoluna dönün (console.firebase.google.com)
+
+2. Sol menüden "Derleme" → "Firestore Database"e tıklayın
+
+3. "Veritabanı oluştur" tıklayın
+
+4. Konum: "eur3 (europe-west)" seçin → "İleri"
+
+5. "Test modunda başlat" seçin → "Oluştur"
+
+6. Veritabanı açıldı! Tüm gelir ve gider kayıtları burada saklanacak.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADIM 5: UYGULAMAYI İNTERNETE YAYINLAMA (Netlify — EN KOLAY YOL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Tarayıcıda şu adrese gidin:
+   https://app.netlify.com
+
+2. "Sign up" → "Continue with Google" ile kayıt olun
+
+3. Ana sayfaya gelince şunu yapın:
+   "azra2026" KLASÖRÜNÜ sürükleyip Netlify sayfasına bırakın
+   (Sayfada büyük bir alan görünecek: "Dosyaları buraya bırakın")
+
+4. Yükleme tamamlanınca size bir adres verilecek:
+   Örnek: https://amazing-ada-123456.netlify.app
+
+5. Bu adresi not edin — uygulamanızın adresi budur!
+
+6. İsterseniz ücretsiz özel isim alabilirsiniz:
+   "Site configuration" → "Change site name"
+   → azra-sahil-2026 yazın → Kaydet
+   → Adres: https://azra-sahil-2026.netlify.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADIM 6: TELEFONA YÜKLEME (Ana Ekrana Ekle)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Android (Chrome):
+  1. Chrome'da uygulamanın adresini açın
+  2. Sağ üstteki ⋮ menüye dokunun
+  3. "Ana ekrana ekle"ye dokunun
+  4. "Ekle"ye dokunun
+  → Artık telefonda uygulama ikonu görünür!
+
+iPhone (Safari):
+  1. Safari'de uygulamanın adresini açın
+  2. Alt ortadaki paylaş (□↑) simgesine dokunun
+  3. "Ana Ekrana Ekle"ye dokunun
+  4. "Ekle"ye dokunun
+  → Artık iPhone'da uygulama ikonu görünür!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KULLANICI BİLGİLERİ (Giriş için)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────┬──────────────────┬──────────────┐
+│ Kullanıcı Adı│ Şifre            │ Yetki        │
+├──────────────┼──────────────────┼──────────────┤
+│ ferhat       │ ferhat2026       │ YÖNETİCİ ★   │
+│ mehmet       │ mehmet2026       │ İzleyici     │
+│ kalgay       │ kalgay2026       │ İzleyici     │
+│ mustafa      │ mustafa2026      │ İzleyici     │
+│ cetin        │ cetin2026        │ İzleyici     │
+│ aylin        │ aylin2026        │ İzleyici     │
+└──────────────┴──────────────────┴──────────────┘
+
+★ Yönetici: Gelir/gider ekleme, tüm verileri düzenleme
+  İzleyici: Sadece görüntüleme, hiçbir değişiklik yapamaz
+
+ŞİFRE DEĞİŞTİRMEK İSTERSENİZ:
+  js/app.js dosyasını Not Defteri ile açın
+  "USERS" bölümünde ilgili şifreyi değiştirin
+  Dosyayı kaydedin ve Netlify'a yeniden sürükleyin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UYGULAMA ÖZELLİKLERİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 58 daire tam listesi (kat, malik, sakin, telefon)
+✅ Gelir ekle → daire bakiyesi anında güncellenir
+✅ Gider ekle → o ayın kasasına otomatik yansır
+✅ Daire detayı → borç durumu + ödenen aylar
+✅ Ara + WhatsApp mesajı gönder
+✅ Daire ekstresi görüntüle + WhatsApp ile gönder
+✅ JPG / PDF indirme (hazırlanıyor)
+✅ Aylık kasa özeti raporu
+✅ Borç dökümü tablosu
+✅ Gerçek zamanlı sync (6 kullanıcı aynı anda görebilir)
+✅ Çevrimdışı çalışır (internet kesilse de açılır)
+✅ Telefona kurulabilir (APK gibi)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SORUN GİDERME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ Giriş yapamıyorum
+   → Kullanıcı adını küçük harfle yazın (ferhat, cetin gibi)
+
+❓ Veriler kayboldu
+   → Firebase Firestore'a bakın, veriler orada durmalı
+
+❓ Uygulama açılmıyor
+   → Tarayıcı önbelleğini temizleyin (Ctrl+Shift+Delete)
+
+❓ Yardım için Claude'a sorun:
+   "Azra-2026 uygulamasında şu sorun var: ..."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    İyi kullanımlar! 🌊
+                  Azra Sahil Sitesi · 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
