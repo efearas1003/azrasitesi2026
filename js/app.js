@@ -770,9 +770,15 @@ window.scrollToBottom=p=>document.getElementById(p+'-bottom')?.scrollIntoView({b
 // KASA
 function renderKasaOzet(){
   const el=document.getElementById('kasa-ozet');
-  let h=`<table class="kasa-table"><thead><tr><th>Ay</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right">Kalan</th></tr></thead><tbody>`;
-  state.kasaOnceki.forEach(k=>{h+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td class="kalan" style="text-align:right">${fmt(k.devreden)}</td></tr>`;});
-  h+=`<tr class="aktif"><td>${BUGUN_AY} ★</td><td class="gelir" style="text-align:right">${fmt(getAyTahsilat(BUGUN_AY))}</td><td class="gider" style="text-align:right">${fmt(getAyGider(BUGUN_AY))}</td><td class="kalan" style="text-align:right;color:#0d5c3a">${fmt(getKasaBakiye())}</td></tr>`;
+  let h=`<table class="kasa-table"><thead><tr><th>Ay</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right;color:#00bcd4">Kalan</th></tr></thead><tbody>`;
+  state.kasaOnceki.forEach(k=>{
+    const kr=k.devreden>0?'#00bcd4':k.devreden<0?'#c0392b':'#aaa';
+    h+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td style="text-align:right;font-weight:700;color:${kr}">${k.devreden!==0?fmt(k.devreden):'—'}</td></tr>`;
+  });
+  const hazGelir=getAyTahsilat('HAZİRAN');
+  const hazGider=getAyGider('HAZİRAN');
+  const hazKalan=11589.79+hazGelir-hazGider;
+  h+=`<tr class="aktif"><td>HAZİRAN ★</td><td class="gelir" style="text-align:right">${fmt(hazGelir)}</td><td class="gider" style="text-align:right">${fmt(hazGider)}</td><td style="text-align:right;font-weight:800;color:#00bcd4;font-size:14px">${fmt(hazKalan)}</td></tr>`;
   h+='</tbody></table>';
   el.innerHTML=h;
 }
