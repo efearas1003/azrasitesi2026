@@ -101,6 +101,7 @@
           <button class="sub-tab" onclick="switchSubTab('giderler',this)">Giderler</button>
           <button class="sub-tab" onclick="switchSubTab('kasa',this)">Kasa</button>
           <button class="sub-tab" onclick="switchSubTab('hizmet',this)">Hizmet</button>
+          <button class="sub-tab" onclick="switchSubTab('borclar',this)">Borçlar</button>
         </div>
         <!-- GELİRLER -->
         <div id="panel-gelirler">
@@ -157,6 +158,12 @@
         <div id="panel-hizmet" style="display:none">
           <button class="btn green" style="margin-bottom:12px" onclick="openModal('modal-hs-ekle')"><i class="ti ti-plus"></i> Hizmet Sağlayıcı Ekle</button>
           <div id="hs-list"></div>
+        </div>
+        <!-- EK BORÇLAR -->
+        <div id="panel-borclar" style="display:none">
+          <div class="alert-info" style="margin-bottom:12px"><i class="ti ti-info-circle"></i> Ek borçlar daire bakiyelerine otomatik yansır. Havuz bakım, özel gider gibi masraflar için kullanın.</div>
+          <button class="btn" style="background:#fff3cd;color:#b8860b;border-color:#ffe082;margin-bottom:12px" onclick="openEkBorc()"><i class="ti ti-plus"></i> Ek Borç Ekle</button>
+          <div id="eb-list"></div>
         </div>
         <div class="page-bottom"></div>
       </div>
@@ -302,6 +309,7 @@
     <button class="btn" style="background:#e3f0ff;color:#1565c0;border-color:#bad3f5" onclick="closeModal('modal-fab');openTopluGelir()"><i class="ti ti-list-check"></i> Toplu Gelir Girişi</button>
     <button class="btn danger" onclick="closeModal('modal-fab');openModal('modal-gider')"><i class="ti ti-trending-down"></i> Gider Ekle</button>
     <button class="btn" style="background:#f3e8ff;color:#7b1fa2;border-color:#d4b8f0" onclick="closeModal('modal-fab');openModal('modal-hs-ekle')"><i class="ti ti-tools"></i> Hizmet Sağlayıcı Ekle</button>
+    <button class="btn" style="background:#fff3cd;color:#b8860b;border-color:#ffe082" onclick="closeModal('modal-fab');openEkBorc()"><i class="ti ti-file-invoice"></i> Ek Borç Ekle</button>
     <button class="btn" onclick="closeModal('modal-fab')">İptal</button>
   </div>
 </div>
@@ -459,6 +467,58 @@
     </div>
     <button class="btn primary" id="du-kaydet-btn"><i class="ti ti-check"></i> Güncelle</button>
     <button class="btn" onclick="closeModal('modal-daire-duzenle')">İptal</button>
+  </div>
+</div>
+
+<!-- EK BORÇ MODAL -->
+<div class="modal-overlay" id="modal-eb">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title">Ek Borç Ekle</h2>
+    <div class="alert-info"><i class="ti ti-info-circle"></i> Seçilen aylarda dairelere ek borç yükler. Örn: Havuz bakım, asansör, özel gider.</div>
+    <div class="input-group">
+      <label>Açıklama / Borç Nedeni</label>
+      <input type="text" id="eb-aciklama" placeholder="Örn: Havuz Bakım Bedeli, Asansör Bakım...">
+    </div>
+    <div class="input-group">
+      <label>Kişi Başı Tutar (₺)</label>
+      <input type="number" id="eb-tutar" placeholder="0.00">
+    </div>
+    <div class="input-group">
+      <label>Ay Seçin (birden fazla seçebilirsiniz)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="OCAK"> Ocak</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="ŞUBAT"> Şubat</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="MART"> Mart</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="NİSAN"> Nisan</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="MAYIS"> Mayıs</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="HAZİRAN"> Haziran</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="TEMMUZ"> Temmuz</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="AĞUSTOS"> Ağustos</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="EYLÜL"> Eylül</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="EKİM"> Ekim</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="KASIM"> Kasım</label>
+        <label class="toplu-ay-label"><input type="checkbox" class="eb-ay-cb" value="ARALIK"> Aralık</label>
+      </div>
+    </div>
+    <div class="input-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="eb-tum" onchange="ebTumDegistir()" style="width:18px;height:18px;accent-color:#0d5c3a">
+        <span>Tüm Dairelere Uygula (58 daire)</span>
+      </label>
+    </div>
+    <div id="eb-daire-secim">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <label style="font-size:12px;font-weight:600;color:#555">Veya Daire Seçin</label>
+        <div style="display:flex;gap:8px">
+          <button onclick="ebDaireTumSec()" style="background:#e4f5ec;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#0d5c3a;cursor:pointer;font-weight:600">Tümü</button>
+          <button onclick="ebDaireTemizle()" style="background:#fdecea;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#c0392b;cursor:pointer;font-weight:600">Temizle</button>
+        </div>
+      </div>
+      <div id="eb-daire-list" style="max-height:180px;overflow-y:auto;border:1px solid #e0e8e2;border-radius:10px;padding:8px 12px"></div>
+    </div>
+    <button class="btn primary" onclick="kaydetEkBorc()" style="margin-top:12px"><i class="ti ti-check"></i> Borçlandır</button>
+    <button class="btn" onclick="closeModal('modal-eb')">İptal</button>
   </div>
 </div>
 

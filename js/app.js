@@ -116,7 +116,7 @@ const DAIRELER = [
   {no:58,kat:15,malik:'HÜLYA YÜCELER GÜVEN',maliktl:'05327713444',sakin:'HÜLYA YÜCELER GÜVEN',sakintl:'05327713444',durum:'EV SAHİBİ'}
 ];
 
-let daireOverrides={}, hizmetSaglayicilar=[];
+let daireOverrides={}, hizmetSaglayicilar=[], ekBorclar=[];
 let state={
   user:null,gelirler:[],giderler:[],puantaj:{},
   kasaOnceki:[
@@ -145,7 +145,10 @@ const fmtPara=v=>v?parseFloat(v).toLocaleString('tr-TR',{minimumFractionDigits:2
 // =====================================================
 const getDaire=no=>{const base=DAIRELER.find(x=>x.no===no);return{...base,...(daireOverrides[no]||{})};};
 const getDaireTahsilat=no=>state.gelirler.filter(g=>g.daireNo===no).reduce((a,b)=>a+b.tutar,0);
-const getDaireBakiyeBorc=no=>(YILLIK_AIDAT+DIGER_BORC)-getDaireTahsilat(no);
+const getDaireEkBorc=no=>{
+  return ekBorclar.filter(b=>b.daireNo===no||b.tumDaireler).reduce((a,b)=>a+b.tutar,0);
+};
+const getDaireBakiyeBorc=no=>(YILLIK_AIDAT+DIGER_BORC+getDaireEkBorc(no))-getDaireTahsilat(no);
 const getAyTahsilat=ay=>state.gelirler.filter(g=>g.donem===ay).reduce((a,b)=>a+b.tutar,0);
 const getAyGider=ay=>state.giderler.filter(g=>g.donem===ay).reduce((a,b)=>a+b.tutar,0);
 const getKasaBakiye=()=>{
@@ -232,6 +235,7 @@ function startFirebaseListeners(){
     state.unsubPuantaj=onSnapshot(doc(db,'puantaj','2026'),s=>{state.puantaj=s.exists()?s.data():{};renderPuantaj();},()=>{renderPuantaj();});
     onSnapshot(doc(db,'daireler','overrides'),s=>{if(s.exists())daireOverrides=s.data();renderDaireler();},()=>{});
     onSnapshot(doc(db,'hizmet','saglayicilar'),s=>{if(s.exists())hizmetSaglayicilar=s.data().liste||[];renderHizmetSaglayicilar();},()=>{});
+    onSnapshot(doc(db,'ekborclar','liste'),s=>{if(s.exists())ekBorclar=s.data().liste||[];renderAll();},()=>{});
   }catch(e){
     console.warn('Firebase başlatma hatası:',e);
     // Cache'den yükle
@@ -500,7 +504,7 @@ function renderHizmetSaglayicilar(){
 // =====================================================
 // RENDER ANA
 // =====================================================
-function renderAll(){renderStats();renderSonIslemler();renderDaireler();renderGelirler();renderGiderler();renderKasaOzet();renderRapor();renderPuantaj();renderHizmetSaglayicilar();}
+function renderAll(){renderStats();renderSonIslemler();renderDaireler();renderGelirler();renderGiderler();renderKasaOzet();renderRapor();renderPuantaj();renderHizmetSaglayicilar();renderEkBorclar();}
 
 function renderStats(){
   const{odendi,bekleyen,pct}=getAyOdemeOrani();
@@ -590,10 +594,10 @@ window.openDaireModal=no=>{
     </div>
     ${kisiBlok}${contactHtml}
     <div class="stat-grid" style="margin-bottom:14px">
-      <div class="stat-card"><div class="stat-label">Toplam Borç</div><div class="stat-value" style="font-size:16px">${fmt(YILLIK_AIDAT+DIGER_BORC)}</div></div>
+      <div class="stat-card"><div class="stat-label">Aidat+Diğer Borç</div><div class="stat-value" style="font-size:16px">${fmt(YILLIK_AIDAT+DIGER_BORC)}</div></div>
+      <div class="stat-card"><div class="stat-label">Ek Borç</div><div class="stat-value" style="font-size:16px;color:#b8860b">${fmt(getDaireEkBorc(no))}</div></div>
       <div class="stat-card"><div class="stat-label">Tahsilat</div><div class="stat-value green" style="font-size:16px">${fmt(tahsilat)}</div></div>
       <div class="stat-card"><div class="stat-label">Bakiye Borç</div><div class="stat-value ${borc>0?'red':'green'}" style="font-size:16px">${borc>0?fmt(borc):'✓ Yok'}</div></div>
-      <div class="stat-card"><div class="stat-label">Diğer Borç</div><div class="stat-value" style="font-size:16px">${fmt(DIGER_BORC)}</div></div>
     </div>
     <div style="font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:10px">2026 Aidat Durumu</div>
     <div class="month-chip-grid">${ayHtml}</div>
@@ -933,7 +937,10 @@ window.switchSubTab=(tab,el)=>{
   activeSubTab=tab;
   document.querySelectorAll('#tab-islemler .sub-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['gelirler','giderler','kasa','hizmet'].forEach(p=>{document.getElementById('panel-'+p).style.display=p===tab?'block':'none';});
+  ['gelirler','giderler','kasa','hizmet','borclar'].forEach(p=>{
+    const el=document.getElementById('panel-'+p);
+    if(el)el.style.display=p===tab?'block':'none';
+  });
 };
 window.switchPuantajTab=(tab,el)=>{
   document.querySelectorAll('#tab-puantaj .sub-tab').forEach(t=>t.classList.remove('active'));
@@ -947,6 +954,7 @@ window.openFabMenu=()=>{
     if(activeSubTab==='gelirler'){openModal('modal-gelir');return;}
     if(activeSubTab==='giderler'){openModal('modal-gider');return;}
     if(activeSubTab==='hizmet'){openModal('modal-hs-ekle');return;}
+    if(activeSubTab==='borclar'){openEkBorc();return;}
   }
   openModal('modal-fab');
 };
@@ -978,6 +986,104 @@ async function loadOzluk(){
   try{const s=await getDoc(doc(db,'personel','ozluk'));if(s.exists())personelOzluk={...personelOzluk,...s.data()};}catch(e){}
   renderOzluk();
 }
+
+// =====================================================
+// EK BORÇLANDIRMA
+// =====================================================
+window.kaydetEkBorc=async()=>{
+  if(!isAdmin())return showToast('Yalnızca yönetici ekleyebilir.');
+  const aciklama=document.getElementById('eb-aciklama').value.trim();
+  const tutar=parseFloat(document.getElementById('eb-tutar').value);
+  const aylar=[...document.querySelectorAll('.eb-ay-cb:checked')].map(cb=>cb.value);
+  const tumDaireler=document.getElementById('eb-tum').checked;
+  const seciliDaireler=tumDaireler?[]:[...document.querySelectorAll('.eb-daire-cb:checked')].map(cb=>parseInt(cb.value));
+  if(!aciklama)return showToast('Açıklama girin.');
+  if(!tutar||isNaN(tutar))return showToast('Tutar girin.');
+  if(!aylar.length)return showToast('En az bir ay seçin.');
+  if(!tumDaireler&&!seciliDaireler.length)return showToast('Daire seçin veya Tüm Daireler seçeneğini işaretleyin.');
+  const yeniBorclar=[];
+  aylar.forEach(ay=>{
+    if(tumDaireler){
+      yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:true,daireNo:null});
+    } else {
+      seciliDaireler.forEach(no=>{
+        yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:false,daireNo:no});
+      });
+    }
+  });
+  ekBorclar=[...ekBorclar,...yeniBorclar];
+  try{await setDoc(doc(db,'ekborclar','liste'),{liste:ekBorclar});}
+  catch(e){}
+  closeModal('modal-eb');
+  renderAll();
+  renderEkBorclar();
+  showToast('✓ Ek borç eklendi — '+yeniBorclar.length+' kayıt');
+};
+
+window.silEkBorc=async(id)=>{
+  if(!confirm('Bu ek borcu silmek istediğinizden emin misiniz?'))return;
+  ekBorclar=ekBorclar.filter(b=>b.id!==id);
+  try{await setDoc(doc(db,'ekborclar','liste'),{liste:ekBorclar});}catch(e){}
+  renderEkBorclar();
+  renderAll();
+  showToast('✓ Ek borç silindi');
+};
+
+window.ebTumDegistir=()=>{
+  const tum=document.getElementById('eb-tum').checked;
+  document.getElementById('eb-daire-secim').style.display=tum?'none':'block';
+};
+
+window.ebDaireTumSec=()=>document.querySelectorAll('.eb-daire-cb').forEach(cb=>cb.checked=true);
+window.ebDaireTemizle=()=>document.querySelectorAll('.eb-daire-cb').forEach(cb=>cb.checked=false);
+
+function renderEkBorclar(){
+  const el=document.getElementById('eb-list');if(!el)return;
+  if(!ekBorclar.length){
+    el.innerHTML='<div class="empty-state"><i class="ti ti-receipt-off"></i><p>Henüz ek borç eklenmemiş</p></div>';
+    return;
+  }
+  // Grupla: açıklama + ay'a göre
+  const gruplar={};
+  ekBorclar.forEach(b=>{
+    const key=b.aciklama+'|'+b.ay;
+    if(!gruplar[key])gruplar[key]={aciklama:b.aciklama,ay:b.ay,tutar:b.tutar,tumDaireler:b.tumDaireler,daireler:[],idler:[]};
+    if(b.daireNo)gruplar[key].daireler.push(b.daireNo);
+    gruplar[key].idler.push(b.id);
+  });
+  el.innerHTML=Object.values(gruplar).map(g=>`
+    <div class="daire-item" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#fff3cd;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ti ti-file-invoice" style="color:#b8860b;font-size:20px"></i>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:#1a1a1a">${g.aciklama}</div>
+          <div style="font-size:12px;color:#888">${g.ay} · ${g.tumDaireler?'Tüm Daireler':g.daireler.length+' daire'} · ${fmt(g.tutar)}</div>
+        </div>
+        ${isAdmin()?`<button onclick="g.idler.forEach(id=>silEkBorc(id))" style="background:#fdecea;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <i class="ti ti-trash" style="color:#c0392b;font-size:15px"></i>
+        </button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderEbDaireList(){
+  const el=document.getElementById('eb-daire-list');if(!el)return;
+  el.innerHTML=DAIRELER.map(d=>{
+    const name=getDaire(d.no).sakin||getDaire(d.no).malik||'—';
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f4f1;cursor:pointer">'
+      +'<input type="checkbox" class="eb-daire-cb" value="'+d.no+'" style="width:18px;height:18px;accent-color:#0d5c3a">'
+      +'<span style="font-size:12px;font-weight:700;color:#0d5c3a;width:28px">'+d.no+'</span>'
+      +'<span style="font-size:13px;color:#1a1a1a;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>'
+      +'</label>';
+  }).join('');
+}
+
+window.openEkBorc=()=>{
+  renderEbDaireList();
+  openModal('modal-eb');
+};
 
 // MODAL / TOAST
 window.openModal=id=>document.getElementById(id)?.classList.add('open');
