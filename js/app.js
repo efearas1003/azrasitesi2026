@@ -149,11 +149,9 @@ const getDaireBakiyeBorc=no=>(YILLIK_AIDAT+DIGER_BORC)-getDaireTahsilat(no);
 const getAyTahsilat=ay=>state.gelirler.filter(g=>g.donem===ay).reduce((a,b)=>a+b.tutar,0);
 const getAyGider=ay=>state.giderler.filter(g=>g.donem===ay).reduce((a,b)=>a+b.tutar,0);
 const getKasaBakiye=()=>{
-  // Tüm Firebase gelirlerini topla
-  const toplamGelir=state.gelirler.reduce((a,b)=>a+b.tutar,0);
-  const toplamGider=state.giderler.reduce((a,b)=>a+b.tutar,0);
-  // Önceden bilinen kasa başlangıcı (Ocak öncesi)
-  return toplamGelir-toplamGider;
+  // Mayıs sonu devreden + Haziran gelir - Haziran gider
+  const mayisDevreden=11589.79;
+  return mayisDevreden+getAyTahsilat('HAZİRAN')-getAyGider('HAZİRAN');
 };
 const getTotalBorc=()=>{
   return DAIRELER.reduce((acc,d)=>{
@@ -506,13 +504,20 @@ function renderAll(){renderStats();renderSonIslemler();renderDaireler();renderGe
 
 function renderStats(){
   const{odendi,bekleyen,pct}=getAyOdemeOrani();
-  document.getElementById('s-tahsilat').textContent=fmt(state.gelirler.reduce((a,b)=>a+b.tutar,0));
-  document.getElementById('s-ay-label').textContent='Toplam Tahsilat';
-  document.getElementById('s-borc').textContent=fmt(getTotalBorc());
+  // Haziran tahsilatı (sadece bu ay)
+  const hazTahsilat=getAyTahsilat('HAZİRAN');
+  document.getElementById('s-tahsilat').textContent=fmt(hazTahsilat);
+  document.getElementById('s-ay-label').textContent='HAZİRAN Tahsilat';
+  // Haziran için eksik aidat borcu (58x1400 - haziran aidat tahsilatı)
+  const hazAidatTahsilat=state.gelirler.filter(g=>g.donem==='HAZİRAN'&&g.aciklama==='Aidat Tahsilatı').reduce((a,b)=>a+b.tutar,0);
+  const hazBorc=Math.max(0,(58*AIDAT)-hazAidatTahsilat);
+  document.getElementById('s-borc').textContent=fmt(hazBorc);
+  document.getElementById('s-borc-label').textContent='HAZİRAN Aidat Borcu';
+  // Kasa bakiyesi: Mayıs devredeni + Haziran net
   document.getElementById('s-kasa').textContent=fmt(getKasaBakiye());
   document.getElementById('odeme-progress').style.width=pct+'%';
   document.getElementById('odeme-oran').textContent=pct+'%';
-  document.getElementById('odeme-ay-label').textContent=BUGUN_AY+' AİDAT';
+  document.getElementById('odeme-ay-label').textContent='HAZİRAN AİDAT';
   document.getElementById('pr-odendi').textContent=odendi+' ödedi';
   document.getElementById('pr-bekleyen').textContent=bekleyen+' bekliyor';
 }
@@ -772,14 +777,44 @@ function renderKasaOzet(){
   const el=document.getElementById('kasa-ozet');
   let h=`<table class="kasa-table"><thead><tr><th>Ay</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right;color:#00bcd4">Kalan</th></tr></thead><tbody>`;
   state.kasaOnceki.forEach(k=>{
-    const kr=k.devreden>0?'#00bcd4':k.devreden<0?'#c0392b':'#aaa';
-    h+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td style="text-align:right;font-weight:700;color:${kr}">${k.devreden!==0?fmt(k.devreden):'—'}</td></tr>`;
+    const kalanRenk=k.devreden>0?'#00bcd4':k.devreden<0?'#c0392b':'#aaa';
+    h+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td style="text-align:right;font-weight:700;color:${kalanRenk}">${k.devreden!==0?fmt(k.devreden):'—'}</td></tr>`;
   });
+  // Haziran: Firebase'den gelen gelir/gider + Mayıs devredeni
   const hazGelir=getAyTahsilat('HAZİRAN');
   const hazGider=getAyGider('HAZİRAN');
-  const hazKalan=11589.79+hazGelir-hazGider;
+  const mayisDevreden=11589.79; // Mayıs sonu kasa bakiyesi
+  const hazKalan=mayisDevreden+hazGelir-hazGider;
   h+=`<tr class="aktif"><td>HAZİRAN ★</td><td class="gelir" style="text-align:right">${fmt(hazGelir)}</td><td class="gider" style="text-align:right">${fmt(hazGider)}</td><td style="text-align:right;font-weight:800;color:#00bcd4;font-size:14px">${fmt(hazKalan)}</td></tr>`;
   h+='</tbody></table>';
+  // Alt özet - tüm yıl toplamı
+  const tumGelir=state.gelirler.reduce((a,b)=>a+b.tutar,0);
+  const tumGider=state.giderler.reduce((a,b)=>a+b.tutar,0);
+  const sabitGelir=state.kasaOnceki.reduce((a,b)=>a+b.gelir,0);
+  const sabitGider=state.kasaOnceki.reduce((a,b)=>a+b.gider,0);
+  h+=`<div style="margin-top:14px;border-top:2px solid #e0e0e0;padding-top:12px">
+    <div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">2026 YILI GENEL ÖZET</div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
+      <span style="color:#666">Ocak-Mayıs Toplam Gelir</span>
+      <span style="font-weight:700;color:#0d5c3a">${fmt(sabitGelir)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
+      <span style="color:#666">Ocak-Mayıs Toplam Gider</span>
+      <span style="font-weight:700;color:#c0392b">${fmt(sabitGider)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
+      <span style="color:#666">HAZİRAN Toplam Gelir</span>
+      <span style="font-weight:700;color:#0d5c3a">${fmt(tumGelir)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
+      <span style="color:#666">HAZİRAN Toplam Gider</span>
+      <span style="font-weight:700;color:#c0392b">${fmt(tumGider)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px;background:#e8f4ee;border-radius:8px;margin-top:8px">
+      <span style="font-size:13px;font-weight:700">Güncel Kasa Bakiyesi</span>
+      <span style="font-size:16px;font-weight:800;color:#00bcd4">${fmt(getKasaBakiye())}</span>
+    </div>
+  </div>`;
   el.innerHTML=h;
 }
 
@@ -823,8 +858,14 @@ function renderRapor(){
   const now=new Date();
   document.getElementById('rapor-tarih').textContent=now.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})+' tarihli rapor';
   let kh=`<table class="kasa-table"><thead><tr><th>Ay</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right">Kalan</th></tr></thead><tbody>`;
-  state.kasaOnceki.forEach(k=>{kh+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td class="kalan" style="text-align:right">${fmt(k.devreden)}</td></tr>`;});
-  kh+=`<tr class="aktif"><td>${BUGUN_AY}</td><td class="gelir" style="text-align:right">${fmt(getAyTahsilat(BUGUN_AY))}</td><td class="gider" style="text-align:right">${fmt(getAyGider(BUGUN_AY))}</td><td class="kalan" style="text-align:right;color:#0d5c3a">${fmt(getKasaBakiye())}</td></tr>`;
+  state.kasaOnceki.forEach(k=>{
+    const kr=k.devreden>0?'#00bcd4':k.devreden<0?'#c0392b':'#aaa';
+    kh+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td style="text-align:right;font-weight:700;color:${kr}">${k.devreden!==0?fmt(k.devreden):'—'}</td></tr>`;
+  });
+  const hazGelirR=getAyTahsilat('HAZİRAN');
+  const hazGiderR=getAyGider('HAZİRAN');
+  const hazKalanR=11589.79+hazGelirR-hazGiderR;
+  kh+=`<tr class="aktif"><td>HAZİRAN ★</td><td class="gelir" style="text-align:right">${fmt(hazGelirR)}</td><td class="gider" style="text-align:right">${fmt(hazGiderR)}</td><td style="text-align:right;font-weight:800;color:#00bcd4;font-size:14px">${fmt(hazKalanR)}</td></tr>`;
   kh+='</tbody></table>';
   document.getElementById('rapor-kasa-table').innerHTML=kh;
   const borcluList=DAIRELER.filter(d=>getDaireBakiyeBorc(d.no)>0);
