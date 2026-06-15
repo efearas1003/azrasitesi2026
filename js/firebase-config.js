@@ -1,7 +1,14 @@
+// =====================================================
+// FIREBASE YAPILANDIRMASI
+// Kurulum adımları için KURULUM_REHBERI.txt dosyasına bakın
+// =====================================================
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+// ⚠️  BURAYA KENDİ FİREBASE BİLGİLERİNİZİ GİRİN
+// Firebase Console → Proje Ayarları → Uygulamalar → Web Uygulaması
 const firebaseConfig = {
   apiKey: "AIzaSyAKCq8ym1AiVBuxjUADL5XiHBvtq_3bUd0",
   authDomain: "azra-sahil-2026.firebaseapp.com",
