@@ -16,7 +16,7 @@ const firebaseConfig = {
   storageBucket: "azra-sahil-2026.firebasestorage.app",
   messagingSenderId: "989272396445",
   appId: "1:989272396445:web:e1bd4e2cebbf7caba7fa74"
-};
+}
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
