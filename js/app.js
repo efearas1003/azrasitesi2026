@@ -188,6 +188,27 @@ window.doLogin=()=>{
     initDaireSelect();setDefaultDates();startFirebaseListeners();loadOzluk();
   }else{e.style.display='block';}
 };
+// =====================================================
+// ŞİFRE DEĞİŞTİRME
+// =====================================================
+window.sifreDegistir=()=>{
+  const mevcutSifre=document.getElementById('sd-mevcut').value;
+  const yeniSifre=document.getElementById('sd-yeni').value;
+  const yeniSifreTekrar=document.getElementById('sd-tekrar').value;
+  const errEl=document.getElementById('sd-error');
+  const u=state.user.username;
+  if(USERS[u].sifre!==mevcutSifre){errEl.textContent='Mevcut şifre yanlış!';errEl.style.display='block';return;}
+  if(yeniSifre.length<6){errEl.textContent='Yeni şifre en az 6 karakter olmalı!';errEl.style.display='block';return;}
+  if(yeniSifre!==yeniSifreTekrar){errEl.textContent='Yeni şifreler eşleşmiyor!';errEl.style.display='block';return;}
+  USERS[u].sifre=yeniSifre;
+  errEl.style.display='none';
+  document.getElementById('sd-mevcut').value='';
+  document.getElementById('sd-yeni').value='';
+  document.getElementById('sd-tekrar').value='';
+  closeModal('modal-sifre');
+  showToast('✓ Şifre değiştirildi');
+};
+
 window.doLogout=()=>{
   [state.unsubGelir,state.unsubGider,state.unsubPuantaj].forEach(u=>u&&u());
   state.user=null;state.gelirler=[];state.giderler=[];state.puantaj={};
@@ -560,9 +581,13 @@ function renderDaireler(){
     const borclu=borc>0;
     const name=d.sakin||d.malik||'—';
     const durumBadge=d.durum==='KİRACI'?'<span class="badge yellow-badge" style="margin-left:6px">Kiracı</span>':d.durum==='EV SAHİBİ'?'<span class="badge green-badge" style="margin-left:6px">Ev Sahibi</span>':'';
+    const tel=d.sakintl||d.maliktl||'';
     return `<div class="daire-item" onclick="openDaireModal(${d.no})">
       <div class="daire-no-badge ${borclu?'borclu':'odendi'}">${d.no}</div>
-      <div class="daire-info"><div class="daire-name">${name}${durumBadge}</div><div class="daire-sub">Kat ${d.kat} · Tahsilat: ${fmt(tahsilat)}</div></div>
+      <div class="daire-info">
+        <div class="daire-name">${name}${durumBadge}</div>
+        <div class="daire-sub">Kat ${d.kat}${tel?' · <i class="ti ti-phone" style="font-size:11px"></i> '+tel:''}</div>
+      </div>
       <div class="daire-amount ${borclu?'borclu':'odendi'}">${borclu?fmt(borc):'✓ Tamam'}</div>
       <i class="ti ti-chevron-right" style="color:#ccc;font-size:16px"></i>
     </div>`;
@@ -905,6 +930,48 @@ function renderRapor(){
   document.getElementById('rapor-ay-detay').innerHTML=ah;
 }
 
+// =====================================================
+// BORÇLU DAİRELERE WHATSAPP HATIRLATMA
+// =====================================================
+window.borcluWaSablon=()=>{
+  const borcluDaireler=DAIRELER.filter(d=>getDaireBakiyeBorc(d.no)>0);
+  if(!borcluDaireler.length){showToast('Borçlu daire yok!');return;}
+  openModal('modal-wa-sablon');
+  const el=document.getElementById('wa-sablon-liste');
+  el.innerHTML=borcluDaireler.map(d=>{
+    const dd=getDaire(d.no);
+    const borc=getDaireBakiyeBorc(d.no);
+    const tel=(dd.sakintl||dd.maliktl||'').replace(/\s/g,'');
+    const wa='90'+tel.replace(/^0/,'');
+    const mesaj=encodeURIComponent(
+      `Sayın ${dd.sakin||dd.malik||'Daire Sakini'},
+
+`+
+      `Azra Sahil Sitesi yönetimi olarak bilgilerinize sunarız.
+
+`+
+      `🏢 Daire No: ${d.no}
+`+
+      `💰 Bakiye Borç: ${fmt(borc)}
+
+`+
+      `Ödemenizi en kısa sürede yapmanızı rica ederiz.
+
+`+
+      `Saygılarımızla,
+Azra Sahil Sitesi Yönetimi`
+    );
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f4f1">
+      <div style="width:36px;height:36px;border-radius:8px;background:#fdecea;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#c0392b;flex-shrink:0">${d.no}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${dd.sakin||dd.malik||'—'}</div>
+        <div style="font-size:12px;color:#888">${fmt(borc)} · ${tel||'Tel yok'}</div>
+      </div>
+      ${tel?`<a href="https://wa.me/${wa}?text=${mesaj}" target="_blank" class="btn wa" style="padding:6px 10px;font-size:12px;width:auto;flex-shrink:0"><i class="ti ti-brand-whatsapp"></i></a>`:'<span style="font-size:11px;color:#aaa">Tel yok</span>'}
+    </div>`;
+  }).join('');
+};
+
 window.raporPaylas=()=>{
   const topGelir=state.gelirler.filter(g=>g.donem===raporAy).reduce((a,b)=>a+b.tutar,0);
   const topGider=state.giderler.filter(g=>g.donem===raporAy).reduce((a,b)=>a+b.tutar,0);
@@ -922,6 +989,55 @@ window.raporPaylas=()=>{
   window.open('https://wa.me/?text='+text,'_blank');
 };
 window.raporYayinla=()=>showToast('Siteye yayınlama yakında gelecek!');
+
+window.yilSonuRaporu=()=>{
+  const tumGelirler=state.gelirler.reduce((a,b)=>a+b.tutar,0);
+  const tumGiderler=state.giderler.reduce((a,b)=>a+b.tutar,0);
+  const sabitGelir=state.kasaOnceki.reduce((a,b)=>a+b.gelir,0);
+  const sabitGider=state.kasaOnceki.reduce((a,b)=>a+b.gider,0);
+  const topGelir=sabitGelir+tumGelirler;
+  const topGider=sabitGider+tumGiderler;
+  const kasaBakiye=getKasaBakiye();
+  const borcluSayisi=DAIRELER.filter(d=>getDaireBakiyeBorc(d.no)>0).length;
+  const toplamBorc=getTotalBorc();
+  const odeyenSayisi=58-borcluSayisi;
+  const html=`<div style="font-family:Arial,sans-serif;padding:24px;max-width:520px;background:#fff">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="background:#0d5c3a;color:#fff;padding:16px;border-radius:10px">
+        <div style="font-size:20px;font-weight:800">AZRA SAHİL SİTESİ</div>
+        <div style="font-size:14px;opacity:0.85;margin-top:4px">2026 YILI KAPANIŞ RAPORU</div>
+        <div style="font-size:12px;opacity:0.7;margin-top:2px">${new Date().toLocaleDateString('tr-TR')} tarihi itibarıyla</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+      <tr style="background:#f5f5f5"><td colspan="2" style="padding:8px 12px;font-size:12px;font-weight:700;color:#0d5c3a;text-transform:uppercase">GELİR ÖZETİ</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Ocak-Mayıs Toplam Gelir</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0d5c3a">${fmt(sabitGelir)}</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Haziran Toplam Gelir</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0d5c3a">${fmt(tumGelirler)}</td></tr>
+      <tr style="background:#e8f4ee"><td style="padding:10px 12px;font-size:14px;font-weight:700">TOPLAM GELİR</td><td style="padding:10px 12px;text-align:right;font-size:16px;font-weight:800;color:#0d5c3a">${fmt(topGelir)}</td></tr>
+      <tr style="background:#f5f5f5"><td colspan="2" style="padding:8px 12px;font-size:12px;font-weight:700;color:#c0392b;text-transform:uppercase;margin-top:8px">GİDER ÖZETİ</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Ocak-Mayıs Toplam Gider</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#c0392b">${fmt(sabitGider)}</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Haziran Toplam Gider</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#c0392b">${fmt(tumGiderler)}</td></tr>
+      <tr style="background:#fdecea"><td style="padding:10px 12px;font-size:14px;font-weight:700">TOPLAM GİDER</td><td style="padding:10px 12px;text-align:right;font-size:16px;font-weight:800;color:#c0392b">${fmt(topGider)}</td></tr>
+      <tr style="background:#e0f7fa"><td style="padding:12px;font-size:15px;font-weight:800">GÜNCEL KASA BAKİYESİ</td><td style="padding:12px;text-align:right;font-size:20px;font-weight:800;color:#00796b">${fmt(kasaBakiye)}</td></tr>
+    </table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+      <tr style="background:#f5f5f5"><td colspan="2" style="padding:8px 12px;font-size:12px;font-weight:700;color:#666;text-transform:uppercase">DAİRE DURUMU</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Toplam Daire</td><td style="padding:8px 12px;text-align:right;font-weight:700">58</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Ödeyen Daire</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0d5c3a">${odeyenSayisi}</td></tr>
+      <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 12px;font-size:13px">Borçlu Daire</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#c0392b">${borcluSayisi}</td></tr>
+      <tr style="background:#fdecea"><td style="padding:10px 12px;font-size:14px;font-weight:700">TOPLAM BAKİYE BORÇ</td><td style="padding:10px 12px;text-align:right;font-size:16px;font-weight:800;color:#c0392b">${fmt(toplamBorc)}</td></tr>
+    </table>
+    <div style="text-align:center;background:#0d5c3a;color:#fff;padding:10px;border-radius:8px;font-size:12px">
+      Azra Sahil Sitesi Yönetimi · 2026
+    </div>
+  </div>`;
+  const blob=new Blob(['<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Yıl Sonu Raporu</title></head><body>'+html+'</body></html>'],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='azra-2026-yilsonu-raporu.html';a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Yıl sonu raporu indirildi');
+};
 
 // NAVİGASYON
 let activeTab='home',activeSubTab='gelirler';

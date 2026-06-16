@@ -548,18 +548,3 @@ body {
   .rapor-title { color: #e0f7fa !important; }
   .rapor-sub { color: #7ab88a !important; }
 }
-@media (prefers-color-scheme: dark) {
-  #personel-ad-label { color: #00bcd4 !important; }
-  #puantaj-ay-baslik { color: #00bcd4 !important; }
-  .daire-name { color: #00bcd4 !important; }
-  .modal-title { color: #00bcd4 !important; }
-  .section-title { color: #00bcd4 !important; }
-  .kasa-table td:first-child { color: #00bcd4 !important; }
-  .stat-value { color: #e0f7fa !important; }
-  .ozluk-val { color: #e0f7fa !important; }
-  .tx-name { color: #e0f7fa !important; }
-  .topbar-title { color: #e0f7fa !important; }
-  .sub-tab.active { color: #00bcd4 !important; border-bottom-color: #00bcd4 !important; }
-  .month-chip.paid { color: #00bcd4 !important; }
-  .green-badge { background: #003d40 !important; color: #00bcd4 !important; }
-}

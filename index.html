@@ -43,6 +43,7 @@
     <div class="topbar-logo">A</div>
     <div class="topbar-title">Azra Sahil Sitesi</div>
     <div id="topbar-badge" class="role-badge"></div>
+    <button class="icon-btn" onclick="openModal('modal-sifre')" title="Şifre Değiştir"><i class="ti ti-key"></i></button>
     <button class="icon-btn" onclick="doLogout()"><i class="ti ti-logout"></i></button>
   </div>
 
@@ -279,6 +280,8 @@
         <div class="action-stack">
           <button class="btn green" onclick="indirRapor('html')"><i class="ti ti-download"></i> PDF / JPG İndir</button>
           <button class="btn wa" onclick="raporPaylas()"><i class="ti ti-brand-whatsapp"></i> WhatsApp Grubuna Gönder</button>
+          <button class="btn" style="background:#fff3cd;color:#b8860b;border-color:#ffe082" onclick="borcluWaSablon()"><i class="ti ti-brand-whatsapp"></i> Borçlulara Hatırlatma Gönder</button>
+          <button class="btn green" onclick="yilSonuRaporu()"><i class="ti ti-file-analytics"></i> Yıl Sonu Raporu İndir</button>
           <button class="btn blue" onclick="raporYayinla()"><i class="ti ti-world"></i> Siteye Yayınla</button>
         </div>
         <div class="page-bottom"></div>
@@ -559,6 +562,32 @@
 
 <div class="modal-overlay" id="modal-daire"><div class="modal bottom-sheet" id="modal-daire-inner"></div></div>
 <div class="modal-overlay" id="modal-ekstre"><div class="modal bottom-sheet" id="modal-ekstre-inner"></div></div>
+
+<!-- ŞİFRE DEĞİŞTİR -->
+<div class="modal-overlay" id="modal-sifre">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title"><i class="ti ti-key"></i> Şifre Değiştir</h2>
+    <div id="sd-error" class="error-msg" style="display:none"></div>
+    <div class="input-group"><label>Mevcut Şifre</label><input type="password" id="sd-mevcut" placeholder="Mevcut şifreniz"></div>
+    <div class="input-group"><label>Yeni Şifre</label><input type="password" id="sd-yeni" placeholder="En az 6 karakter"></div>
+    <div class="input-group"><label>Yeni Şifre Tekrar</label><input type="password" id="sd-tekrar" placeholder="Yeni şifrenizi tekrar girin"></div>
+    <button class="btn primary" onclick="sifreDegistir()"><i class="ti ti-check"></i> Değiştir</button>
+    <button class="btn" onclick="closeModal('modal-sifre')">İptal</button>
+  </div>
+</div>
+
+<!-- BORÇLU DAİRELER WA ŞABLON -->
+<div class="modal-overlay" id="modal-wa-sablon">
+  <div class="modal bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 class="modal-title"><i class="ti ti-brand-whatsapp" style="color:#25D366"></i> Borçlu Dairelere Hatırlatma</h2>
+    <div class="alert-info"><i class="ti ti-info-circle"></i> Her daire için WhatsApp butonu ile kişiselleştirilmiş mesaj gönderin.</div>
+    <div id="wa-sablon-liste" style="max-height:400px;overflow-y:auto"></div>
+    <button class="btn" onclick="closeModal('modal-wa-sablon')" style="margin-top:12px">Kapat</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script type="module" src="js/firebase-config.js"></script>
