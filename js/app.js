@@ -804,48 +804,52 @@ window.scrollToBottom=p=>document.getElementById(p+'-bottom')?.scrollIntoView({b
 // KASA
 function renderKasaOzet(){
   const el=document.getElementById('kasa-ozet');
-  let h=`<table class="kasa-table"><thead><tr><th>Ay</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right;color:#00bcd4">Kalan</th></tr></thead><tbody>`;
-  state.kasaOnceki.forEach(k=>{
-    const kalanRenk=k.devreden>0?'#00bcd4':k.devreden<0?'#c0392b':'#aaa';
-    h+=`<tr><td>${k.ay}</td><td class="gelir" style="text-align:right">${fmt(k.gelir)}</td><td class="gider" style="text-align:right">${fmt(k.gider)}</td><td style="text-align:right;font-weight:700;color:${kalanRenk}">${k.devreden!==0?fmt(k.devreden):'—'}</td></tr>`;
-  });
-  // Haziran: Firebase'den gelen gelir/gider + Mayıs devredeni
   const hazGelir=getAyTahsilat('HAZİRAN');
   const hazGider=getAyGider('HAZİRAN');
-  const mayisDevreden=11589.79; // Mayıs sonu kasa bakiyesi
+  const mayisDevreden=11589.79;
   const hazKalan=mayisDevreden+hazGelir-hazGider;
-  h+=`<tr class="aktif"><td>HAZİRAN ★</td><td class="gelir" style="text-align:right">${fmt(hazGelir)}</td><td class="gider" style="text-align:right">${fmt(hazGider)}</td><td style="text-align:right;font-weight:800;color:#00bcd4;font-size:14px">${fmt(hazKalan)}</td></tr>`;
-  h+='</tbody></table>';
-  // Alt özet - tüm yıl toplamı
-  const tumGelir=state.gelirler.reduce((a,b)=>a+b.tutar,0);
-  const tumGider=state.giderler.reduce((a,b)=>a+b.tutar,0);
-  const sabitGelir=state.kasaOnceki.reduce((a,b)=>a+b.gelir,0);
-  const sabitGider=state.kasaOnceki.reduce((a,b)=>a+b.gider,0);
-  h+=`<div style="margin-top:14px;border-top:2px solid #e0e0e0;padding-top:12px">
-    <div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">2026 YILI GENEL ÖZET</div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
-      <span style="color:#666">Ocak-Mayıs Toplam Gelir</span>
-      <span style="font-weight:700;color:#0d5c3a">${fmt(sabitGelir)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
-      <span style="color:#666">Ocak-Mayıs Toplam Gider</span>
-      <span style="font-weight:700;color:#c0392b">${fmt(sabitGider)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
-      <span style="color:#666">HAZİRAN Toplam Gelir</span>
-      <span style="font-weight:700;color:#0d5c3a">${fmt(tumGelir)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f4f1;font-size:13px">
-      <span style="color:#666">HAZİRAN Toplam Gider</span>
-      <span style="font-weight:700;color:#c0392b">${fmt(tumGider)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:10px;background:#e8f4ee;border-radius:8px;margin-top:8px">
-      <span style="font-size:13px;font-weight:700">Güncel Kasa Bakiyesi</span>
-      <span style="font-size:16px;font-weight:800;color:#00bcd4">${fmt(getKasaBakiye())}</span>
-    </div>
-  </div>`;
+
+  // Tüm aylar - sabit + Haziran (Firebase)
+  const tumAylar=[
+    ...state.kasaOnceki.map(k=>({...k,aktif:false})),
+    {ay:'HAZİRAN',gelir:hazGelir,gider:hazGider,devreden:hazKalan,aktif:true}
+  ];
+
+  let h=`<table class="kasa-table" style="width:100%">
+    <thead><tr>
+      <th>Ay</th>
+      <th style="text-align:right">Gelir</th>
+      <th style="text-align:right">Gider</th>
+      <th style="text-align:right;color:#00bcd4">Kalan</th>
+    </tr></thead><tbody>`;
+
+  tumAylar.forEach(k=>{
+    const kr=k.devreden>0?'#00bcd4':k.devreden<0?'#c0392b':'#888';
+    const rowStyle=k.aktif?'background:rgba(0,188,212,0.08);':'';
+    const ayLabel=k.aktif?k.ay+' ★':k.ay;
+    h+=`<tr style="${rowStyle}">
+      <td style="${k.aktif?'font-weight:700;color:#00bcd4':''}font-size:12px">${ayLabel}</td>
+      <td class="gelir" style="text-align:right">${k.gelir>0?fmt(k.gelir):'—'}</td>
+      <td class="gider" style="text-align:right">${k.gider>0?fmt(k.gider):'—'}</td>
+      <td style="text-align:right;font-weight:700;color:${kr}">${k.devreden!==0?fmt(k.devreden):'—'}</td>
+    </tr>`;
+  });
+
+  // Toplam satırı
+  const topGelir=tumAylar.reduce((a,b)=>a+b.gelir,0);
+  const topGider=tumAylar.reduce((a,b)=>a+b.gider,0);
+  h+=`</tbody><tfoot>
+    <tr style="border-top:2px solid #0d5c3a;background:rgba(13,92,58,0.1)">
+      <td style="font-weight:800;font-size:13px;padding-top:8px">TOPLAM</td>
+      <td class="gelir" style="text-align:right;font-weight:800;font-size:13px">${fmt(topGelir)}</td>
+      <td class="gider" style="text-align:right;font-weight:800;font-size:13px">${fmt(topGider)}</td>
+      <td style="text-align:right;font-weight:800;font-size:14px;color:#00bcd4">${fmt(hazKalan)}</td>
+    </tr>
+  </tfoot></table>`;
+
   el.innerHTML=h;
 }
+
 
 // PUANTAJ
 function renderPuantaj(){
