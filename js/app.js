@@ -149,8 +149,27 @@ const getDaireEkBorc=no=>{
   return ekBorclar.filter(b=>b.daireNo===no||b.tumDaireler).reduce((a,b)=>a+b.tutar,0);
 };
 const getDaireBakiyeBorc=no=>(YILLIK_AIDAT+DIGER_BORC+getDaireEkBorc(no))-getDaireTahsilat(no);
-const getAyTahsilat=ay=>state.gelirler.filter(g=>g.donem===ay).reduce((a,b)=>a+b.tutar,0);
-const getAyGider=ay=>state.giderler.filter(g=>g.donem===ay).reduce((a,b)=>a+b.tutar,0);
+// Tahsilat: o ay içinde gerçekleşen (tarih ayı esas), Gelirler listesi için dönem bazlı borç düşümü ayrı
+const getAyTahsilat=ay=>{
+  // Önce o ay içinde tahsil edilen tüm gelirleri topla (tarih ayı = ay)
+  const ayIndex=AYLAR.indexOf(ay);
+  return state.gelirler.filter(g=>{
+    if(!g.tarih)return g.donem===ay;
+    const parts=g.tarih.split('.');
+    if(parts.length===3){const gAy=new Date(parseInt(parts[2]),parseInt(parts[1])-1,1).getMonth();return gAy===ayIndex;}
+    return g.donem===ay;
+  }).reduce((a,b)=>a+b.tutar,0);
+};
+// Gider: ödeme yapılan tarih ayı esas
+const getAyGider=ay=>{
+  const ayIndex=AYLAR.indexOf(ay);
+  return state.giderler.filter(g=>{
+    if(!g.tarih)return g.donem===ay;
+    const parts=g.tarih.split('.');
+    if(parts.length===3){const gAy=new Date(parseInt(parts[2]),parseInt(parts[1])-1,1).getMonth();return gAy===ayIndex;}
+    return g.donem===ay;
+  }).reduce((a,b)=>a+b.tutar,0);
+};
 const getKasaBakiye=()=>{
   // Mayıs sonu devreden + Haziran gelir - Haziran gider
   const mayisDevreden=11589.79;
@@ -380,7 +399,8 @@ window.kaydetTopluGelir=async()=>{
 window.kaydetGider=async()=>{
   if(!isAdmin())return showToast('Yalnızca yönetici veri girebilir.');
   const tarih=document.getElementById('gid-tarih').value;
-  const donem=document.getElementById('gid-donem').value;
+  // Dönem artık tarihten otomatik belirlenir
+  const donem=tarihtenDonem(tarih);
   const muhatap=document.getElementById('gid-muhatap').value.trim();
   const tutar=parseFloat(document.getElementById('gid-tutar').value);
   const kategori=document.getElementById('gid-kategori').value;
@@ -393,7 +413,7 @@ window.kaydetGider=async()=>{
 };
 
 function resetGelirForm(){document.getElementById('g-daire').value='';document.getElementById('g-tur').value='aidat';document.getElementById('g-tutar').value='';document.getElementById('g-not').value='';document.getElementById('g-tutar-group').style.display='none';document.getElementById('g-tarih').value=today();document.getElementById('modal-gelir-title').textContent='Gelir Ekle';document.getElementById('gelir-kaydet-btn').onclick=kaydetGelir;}
-function resetGiderForm(){document.getElementById('gid-muhatap').value='';document.getElementById('gid-tutar').value='';document.getElementById('gid-aciklama').value='';document.getElementById('gid-tarih').value=today();document.getElementById('modal-gider-title').textContent='Gider Ekle';document.getElementById('gider-kaydet-btn').onclick=kaydetGider;}
+function resetGiderForm(){document.getElementById('gid-muhatap').value='';document.getElementById('gid-tutar').value='';document.getElementById('gid-aciklama').value='';document.getElementById('gid-tarih').value=today();document.getElementById('modal-gider-title').textContent='Gider Ekle';document.getElementById('gider-kaydet-btn').onclick=kaydetGider;window.gidTarihtenDonemBelirle&&window.gidTarihtenDonemBelirle();}
 
 // =====================================================
 // SİL / DÜZENLE
@@ -423,7 +443,6 @@ window.duzenleGelir=id=>{
 window.duzenleGider=id=>{
   const g=state.giderler.find(x=>x.id===id);if(!g)return;
   document.getElementById('gid-tarih').value=g.tarih.split('.').reverse().join('-');
-  document.getElementById('gid-donem').value=g.donem;
   document.getElementById('gid-muhatap').value=g.muhatap;
   document.getElementById('gid-tutar').value=g.tutar;
   document.getElementById('gid-kategori').value=g.kategori||'Diğer Çeşitli Hizmet Giderleri';
@@ -431,7 +450,8 @@ window.duzenleGider=id=>{
   document.getElementById('modal-gider-title').textContent='Gider Düzenle';
   document.getElementById('gider-kaydet-btn').onclick=async()=>{
     if(!confirm('Güncellemek istiyor musunuz?'))return;
-    const gn={tarih:document.getElementById('gid-tarih').value.split('-').reverse().join('.'),donem:document.getElementById('gid-donem').value,muhatap:document.getElementById('gid-muhatap').value.trim(),tutar:parseFloat(document.getElementById('gid-tutar').value)||g.tutar,kategori:document.getElementById('gid-kategori').value,aciklama:document.getElementById('gid-aciklama').value||document.getElementById('gid-kategori').value};
+    const yeniTarih=document.getElementById('gid-tarih').value;
+    const gn={tarih:yeniTarih.split('-').reverse().join('.'),donem:tarihtenDonem(yeniTarih),muhatap:document.getElementById('gid-muhatap').value.trim(),tutar:parseFloat(document.getElementById('gid-tutar').value)||g.tutar,kategori:document.getElementById('gid-kategori').value,aciklama:document.getElementById('gid-aciklama').value||document.getElementById('gid-kategori').value};
     try{await updateDoc(doc(db,'giderler',id),gn);}catch(e){const i=state.giderler.findIndex(x=>x.id===id);if(i>=0)state.giderler[i]={...state.giderler[i],...gn};renderAll();}
     closeModal('modal-gider');resetGiderForm();showToast('✓ Güncellendi');
   };
@@ -529,16 +549,16 @@ function renderAll(){renderStats();renderSonIslemler();renderDaireler();renderGe
 
 function renderStats(){
   const{odendi,bekleyen,pct}=getAyOdemeOrani();
-  // Haziran tahsilatı (sadece bu ay)
+  // Haziran'da tarih bazlı tüm tahsilatlar (geçmiş dönem dahil)
   const hazTahsilat=getAyTahsilat('HAZİRAN');
   document.getElementById('s-tahsilat').textContent=fmt(hazTahsilat);
   document.getElementById('s-ay-label').textContent='HAZİRAN Tahsilat';
-  // Haziran için eksik aidat borcu (58x1400 - haziran aidat tahsilatı)
+  // Haziran için dönem bazlı aidat borcu (sadece HAZİRAN dönemine ait)
   const hazAidatTahsilat=state.gelirler.filter(g=>g.donem==='HAZİRAN'&&g.aciklama==='Aidat Tahsilatı').reduce((a,b)=>a+b.tutar,0);
   const hazBorc=Math.max(0,(58*AIDAT)-hazAidatTahsilat);
   document.getElementById('s-borc').textContent=fmt(hazBorc);
   document.getElementById('s-borc-label').textContent='HAZİRAN Aidat Borcu';
-  // Kasa bakiyesi: Mayıs devredeni + Haziran net
+  // Kasa bakiyesi: Mayıs devredeni + Haziran net (tarih bazlı)
   document.getElementById('s-kasa').textContent=fmt(getKasaBakiye());
   document.getElementById('odeme-progress').style.width=pct+'%';
   document.getElementById('odeme-oran').textContent=pct+'%';
@@ -742,21 +762,32 @@ function indir_html(html, dosyaAdi){
   showToast('✓ '+dosyaAdi+' indirildi (HTML → tarayıcıda aç → Yazdır → PDF kaydet)');
 }
 
+// Tarih string'ini karşılaştırılabilir değere çevir (GG.AA.YYYY → YYYY-AA-GG)
+function tarihSirala(tarih){
+  if(!tarih)return '0000-00-00';
+  const p=tarih.split('.');
+  if(p.length===3)return p[2]+'-'+p[1]+'-'+p[0];
+  return tarih;
+}
+
 // GELİRLER LİSTESİ
 function renderGelirler(){
   const el=document.getElementById('gelir-list');
   let list=[...state.gelirler];
   if(state.gelirFiltre!=='hepsi'){
-    // Ay filtrelenince: daire no sırasına göre
-    list=list.filter(g=>g.donem===state.gelirFiltre).sort((a,b)=>a.daireNo-b.daireNo);
-  } else {
-    // Hepsi: önce dönem (ay sırası), sonra daire no
-    list=list.sort((a,b)=>{
-      const ayFark=AYLAR.indexOf(a.donem)-AYLAR.indexOf(b.donem);
-      if(ayFark!==0)return ayFark;
-      return a.daireNo-b.daireNo;
-    });
+    list=list.filter(g=>g.donem===state.gelirFiltre);
   }
+  // Yeniden eskiye tarihe göre sırala
+  list=list.sort((a,b)=>tarihSirala(b.tarih).localeCompare(tarihSirala(a.tarih))||a.daireNo-b.daireNo);
+
+  const toplam=list.reduce((a,b)=>a+b.tutar,0);
+  const toplamBar=document.getElementById('gelir-toplam-bar');
+  const toplamTutar=document.getElementById('gelir-toplam-tutar');
+  if(toplamBar&&toplamTutar){
+    toplamBar.style.display=list.length?'flex':'none';
+    toplamTutar.textContent=fmt(toplam);
+  }
+
   if(!list.length){el.innerHTML='<div class="empty-state"><i class="ti ti-trending-up"></i><p>Kayıt bulunamadı</p></div>';return;}
   el.innerHTML=`<div id="gelir-top"></div>`+list.map(g=>`
     <div class="tx-row">
@@ -775,14 +806,19 @@ function renderGiderler(){
   const el=document.getElementById('gider-list');
   let list=[...state.giderler];
   if(state.giderFiltre!=='hepsi'){
-    list=list.filter(g=>g.donem===state.giderFiltre).sort((a,b)=>AYLAR.indexOf(a.donem)-AYLAR.indexOf(b.donem));
-  } else {
-    list=list.sort((a,b)=>{
-      const ayFark=AYLAR.indexOf(a.donem)-AYLAR.indexOf(b.donem);
-      if(ayFark!==0)return ayFark;
-      return (a.tarih||'').localeCompare(b.tarih||'');
-    });
+    list=list.filter(g=>g.donem===state.giderFiltre);
   }
+  // Yeniden eskiye tarihe göre sırala
+  list=list.sort((a,b)=>tarihSirala(b.tarih).localeCompare(tarihSirala(a.tarih)));
+
+  const toplam=list.reduce((a,b)=>a+b.tutar,0);
+  const toplamBar=document.getElementById('gider-toplam-bar');
+  const toplamTutar=document.getElementById('gider-toplam-tutar');
+  if(toplamBar&&toplamTutar){
+    toplamBar.style.display=list.length?'flex':'none';
+    toplamTutar.textContent=fmt(toplam);
+  }
+
   if(!list.length){el.innerHTML='<div class="empty-state"><i class="ti ti-trending-down"></i><p>Kayıt bulunamadı</p></div>';return;}
   el.innerHTML=`<div id="gider-top"></div>`+list.map(g=>`
     <div class="tx-row">
@@ -1211,6 +1247,25 @@ window.closeModal=id=>document.getElementById(id)?.classList.remove('open');
 document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
+// Tarihten dönem (ay) belirle
+function tarihtenDonem(tarihStr){
+  if(!tarihStr)return BUGUN_AY;
+  // YYYY-MM-DD veya DD.MM.YYYY formatını destekle
+  let ay;
+  if(tarihStr.includes('-')){ay=new Date(tarihStr).getMonth();}
+  else if(tarihStr.includes('.')){const p=tarihStr.split('.');ay=parseInt(p[1])-1;}
+  else return BUGUN_AY;
+  return AYLAR[ay]||BUGUN_AY;
+}
+
+// Gider tarih input değişince dönem göster
+window.gidTarihtenDonemBelirle=()=>{
+  const tarih=document.getElementById('gid-tarih').value;
+  const donem=tarihtenDonem(tarih);
+  const lbl=document.getElementById('gid-donem-goster');
+  if(lbl){lbl.textContent='📅 Dönem: '+donem;lbl.style.display=tarih?'block':'none';}
+};
+
 function initDaireSelect(){
   const sel=document.getElementById('g-daire');sel.innerHTML='<option value="">Seçiniz...</option>';
   DAIRELER.forEach(d=>{const dd=getDaire(d.no);const o=document.createElement('option');o.value=d.no;o.textContent=`${d.no} — ${dd.sakin||dd.malik||'Daire '+d.no}`;sel.appendChild(o);});
@@ -1219,7 +1274,9 @@ function setDefaultDates(){
   const t=today();
   ['g-tarih','gid-tarih','tg-tarih'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=t;});
   const ay=new Date().getMonth();
-  ['g-donem','gid-donem'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=ay;});
+  ['g-donem'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=ay;});
+  // Gider dönem göstergesini güncelle
+  window.gidTarihtenDonemBelirle&&window.gidTarihtenDonemBelirle();
 }
 
 // TOPLU GELİR MODAL AÇ
