@@ -350,6 +350,45 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ===== PANELLERİN SABİT BAŞLIĞI ===== */
+.panel-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #f0f4f1;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  .panel-sticky-header { background: #0f1a14; }
+}
+
+/* ===== LİSTE TOPLAM BAR ===== */
+.liste-toplam-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-top: 2px solid #0d5c3a;
+  border-radius: 0 0 12px 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 8px;
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+.liste-toplam-tutar { font-size: 15px; font-weight: 800; }
+.liste-toplam-tutar.green { color: #0d5c3a; }
+.liste-toplam-tutar.red { color: #c0392b; }
+@media (prefers-color-scheme: dark) {
+  .liste-toplam-bar { background: #1a2820; border-top-color: #0d5c3a; color: #7ab88a; }
+  .liste-toplam-tutar.green { color: #4ade80; }
+  .liste-toplam-tutar.red { color: #f87171; }
+}
+
 /* ===== SCROLLBAR ===== */
 .tab-panel::-webkit-scrollbar { width: 0; }
 .modal.bottom-sheet::-webkit-scrollbar { width: 0; }
