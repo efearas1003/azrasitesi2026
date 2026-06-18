@@ -70,6 +70,18 @@
           <div class="card-head"><span class="section-title">Son İşlemler</span></div>
           <div id="son-islemler"></div>
         </div>
+        <div class="card" style="padding:12px">
+          <a href="https://www.akbankkurumsal.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit">
+            <div style="width:46px;height:46px;border-radius:12px;background:#e30613;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="ti ti-building-bank" style="color:#fff;font-size:24px"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a">Akbank Kurumsal</div>
+              <div style="font-size:12px;color:#888">İnternet Bankacılığı → Giriş</div>
+            </div>
+            <i class="ti ti-external-link" style="color:#e30613;font-size:20px"></i>
+          </a>
+        </div>
         <div class="page-bottom"></div>
       </div>
     </div>
@@ -106,52 +118,62 @@
         </div>
         <!-- GELİRLER -->
         <div id="panel-gelirler">
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <button class="btn green" style="flex:1" onclick="openModal('modal-gelir')"><i class="ti ti-trending-up"></i> Yeni Gelir</button>
-            <button class="btn" style="background:#e3f0ff;color:#1565c0;border-color:#bad3f5;flex:1" onclick="openTopluGelir()"><i class="ti ti-list-check"></i> Toplu Giriş</button>
-            <button onclick="scrollToTop('gelir')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-up" style="color:#0d5c3a;font-size:16px"></i></button>
-            <button onclick="scrollToBottom('gelir')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-down" style="color:#0d5c3a;font-size:16px"></i></button>
-          </div>
-          <div class="filter-row">
-            <button class="filter-chip gelir-filtre-chip active" onclick="gelirAyFiltre('hepsi',this)">Hepsi</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('OCAK',this)">Oca</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('ŞUBAT',this)">Şub</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('MART',this)">Mar</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('NİSAN',this)">Nis</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('MAYIS',this)">May</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('HAZİRAN',this)">Haz</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('TEMMUZ',this)">Tem</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('AĞUSTOS',this)">Ağu</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('EYLÜL',this)">Eyl</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('EKİM',this)">Eki</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('KASIM',this)">Kas</button>
-            <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('ARALIK',this)">Ara</button>
+          <div class="panel-sticky-header">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <button class="btn green" style="flex:1" onclick="openModal('modal-gelir')"><i class="ti ti-trending-up"></i> Yeni Gelir</button>
+              <button class="btn" style="background:#e3f0ff;color:#1565c0;border-color:#bad3f5;flex:1" onclick="openTopluGelir()"><i class="ti ti-list-check"></i> Toplu Giriş</button>
+              <button onclick="scrollToTop('gelir')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-up" style="color:#0d5c3a;font-size:16px"></i></button>
+              <button onclick="scrollToBottom('gelir')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-down" style="color:#0d5c3a;font-size:16px"></i></button>
+            </div>
+            <div class="filter-row">
+              <button class="filter-chip gelir-filtre-chip active" onclick="gelirAyFiltre('hepsi',this)">Hepsi</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('OCAK',this)">Oca</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('ŞUBAT',this)">Şub</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('MART',this)">Mar</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('NİSAN',this)">Nis</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('MAYIS',this)">May</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('HAZİRAN',this)">Haz</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('TEMMUZ',this)">Tem</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('AĞUSTOS',this)">Ağu</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('EYLÜL',this)">Eyl</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('EKİM',this)">Eki</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('KASIM',this)">Kas</button>
+              <button class="filter-chip gelir-filtre-chip" onclick="gelirAyFiltre('ARALIK',this)">Ara</button>
+            </div>
           </div>
           <div id="gelir-list"></div>
+          <div id="gelir-toplam-bar" class="liste-toplam-bar" style="display:none">
+            <span>Toplam Gelir</span><span id="gelir-toplam-tutar" class="liste-toplam-tutar green"></span>
+          </div>
         </div>
         <!-- GİDERLER -->
         <div id="panel-giderler" style="display:none">
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <button class="btn danger" style="flex:1" onclick="openModal('modal-gider')"><i class="ti ti-trending-down"></i> Yeni Gider</button>
-            <button onclick="scrollToTop('gider')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-up" style="color:#0d5c3a;font-size:16px"></i></button>
-            <button onclick="scrollToBottom('gider')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-down" style="color:#0d5c3a;font-size:16px"></i></button>
-          </div>
-          <div class="filter-row">
-            <button class="filter-chip gider-filtre-chip active" onclick="giderAyFiltre('hepsi',this)">Hepsi</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('OCAK',this)">Oca</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('ŞUBAT',this)">Şub</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('MART',this)">Mar</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('NİSAN',this)">Nis</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('MAYIS',this)">May</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('HAZİRAN',this)">Haz</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('TEMMUZ',this)">Tem</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('AĞUSTOS',this)">Ağu</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('EYLÜL',this)">Eyl</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('EKİM',this)">Eki</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('KASIM',this)">Kas</button>
-            <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('ARALIK',this)">Ara</button>
+          <div class="panel-sticky-header">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <button class="btn danger" style="flex:1" onclick="openModal('modal-gider')"><i class="ti ti-trending-down"></i> Yeni Gider</button>
+              <button onclick="scrollToTop('gider')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-up" style="color:#0d5c3a;font-size:16px"></i></button>
+              <button onclick="scrollToBottom('gider')" style="background:#f0f4f1;border:none;border-radius:8px;padding:8px 10px;cursor:pointer"><i class="ti ti-arrow-down" style="color:#0d5c3a;font-size:16px"></i></button>
+            </div>
+            <div class="filter-row">
+              <button class="filter-chip gider-filtre-chip active" onclick="giderAyFiltre('hepsi',this)">Hepsi</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('OCAK',this)">Oca</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('ŞUBAT',this)">Şub</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('MART',this)">Mar</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('NİSAN',this)">Nis</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('MAYIS',this)">May</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('HAZİRAN',this)">Haz</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('TEMMUZ',this)">Tem</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('AĞUSTOS',this)">Ağu</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('EYLÜL',this)">Eyl</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('EKİM',this)">Eki</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('KASIM',this)">Kas</button>
+              <button class="filter-chip gider-filtre-chip" onclick="giderAyFiltre('ARALIK',this)">Ara</button>
+            </div>
           </div>
           <div id="gider-list"></div>
+          <div id="gider-toplam-bar" class="liste-toplam-bar" style="display:none">
+            <span>Toplam Gider</span><span id="gider-toplam-tutar" class="liste-toplam-tutar red"></span>
+          </div>
         </div>
         <!-- KASA -->
         <div id="panel-kasa" style="display:none"><div id="kasa-ozet"></div></div>
@@ -393,10 +415,8 @@
     <div class="sheet-handle"></div>
     <h2 class="modal-title" id="modal-gider-title">Gider Ekle</h2>
     <div class="alert-info"><i class="ti ti-info-circle"></i> Gider o ayın kasasına otomatik yansır.</div>
-    <div class="input-group"><label>İşlem Tarihi</label><input type="date" id="gid-tarih"></div>
-    <div class="input-group"><label>Dönem</label>
-      <select id="gid-donem"><option>OCAK</option><option>ŞUBAT</option><option>MART</option><option>NİSAN</option><option>MAYIS</option><option>HAZİRAN</option><option>TEMMUZ</option><option>AĞUSTOS</option><option>EYLÜL</option><option>EKİM</option><option>KASIM</option><option>ARALIK</option></select>
-    </div>
+    <div class="input-group"><label>İşlem Tarihi</label><input type="date" id="gid-tarih" onchange="gidTarihtenDonemBelirle()"></div>
+    <div id="gid-donem-goster" style="font-size:12px;color:#0d5c3a;font-weight:600;margin:-8px 0 10px;padding:6px 10px;background:#e4f5ec;border-radius:8px;display:none"></div>
     <div class="input-group"><label>Muhattap / Firma</label><input type="text" id="gid-muhatap" placeholder="Ödeme yapılan kişi veya şirket"></div>
     <div class="input-group"><label>Tutar (₺)</label><input type="number" id="gid-tutar" placeholder="0.00"></div>
     <div class="input-group"><label>Kategori</label>
