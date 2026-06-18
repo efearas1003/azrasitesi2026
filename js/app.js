@@ -1,4 +1,4 @@
-     // =====================================================
+// =====================================================
 // AZRA-2026 v6.0 — TAM UYGULAMA
 // =====================================================
 import { db } from './firebase-config.js';
@@ -118,7 +118,7 @@ const DAIRELER = [
 
 let daireOverrides={}, hizmetSaglayicilar=[], ekBorclar=[];
 let state={
-  user:null,gelirler:[],giderler:[],puantaj:{},
+  user:null,gelirler:[],giderler:[],puantaj:{},fazlaMesai:{},
   kasaOnceki:[
     {ay:'OCAK',acilis:0,gelir:81200,gider:81200,devreden:0},
     {ay:'ŞUBAT',acilis:0,gelir:79800,gider:79800,devreden:0},
@@ -234,7 +234,7 @@ window.sifreDegistir=()=>{
 
 window.doLogout=()=>{
   [state.unsubGelir,state.unsubGider,state.unsubPuantaj].forEach(u=>u&&u());
-  state.user=null;state.gelirler=[];state.giderler=[];state.puantaj={};
+  state.user=null;state.gelirler=[];state.giderler=[];state.puantaj={};state.fazlaMesai={};
   document.getElementById('screen-main').classList.remove('active');
   document.getElementById('screen-login').classList.add('active');
   document.getElementById('inp-user').value='';document.getElementById('inp-pass').value='';
@@ -276,7 +276,8 @@ function startFirebaseListeners(){
         renderAll();
       }
     );
-    state.unsubPuantaj=onSnapshot(doc(db,'puantaj','2026'),s=>{state.puantaj=s.exists()?s.data():{};renderPuantaj();},()=>{renderPuantaj();});
+    state.unsubPuantaj=onSnapshot(doc(db,'puantaj','2026'),s=>{state.puantaj=s.exists()?s.data():{};renderPuantaj();renderFazlaMesai();},()=>{renderPuantaj();renderFazlaMesai();});
+    onSnapshot(doc(db,'fazlamesai','2026'),s=>{state.fazlaMesai=s.exists()?s.data():{};renderFazlaMesai();},()=>{renderFazlaMesai();});
     onSnapshot(doc(db,'daireler','overrides'),s=>{if(s.exists())daireOverrides=s.data();renderDaireler();},()=>{});
     onSnapshot(doc(db,'hizmet','saglayicilar'),s=>{if(s.exists())hizmetSaglayicilar=s.data().liste||[];renderHizmetSaglayicilar();},()=>{});
     onSnapshot(doc(db,'ekborclar','liste'),s=>{if(s.exists())ekBorclar=s.data().liste||[];renderAll();},()=>{});
@@ -549,7 +550,7 @@ function renderHizmetSaglayicilar(){
 // =====================================================
 // RENDER ANA
 // =====================================================
-function renderAll(){renderStats();renderSonIslemler();renderDaireler();renderGelirler();renderGiderler();renderKasaOzet();renderRapor();renderPuantaj();renderHizmetSaglayicilar();renderEkBorclar();}
+function renderAll(){renderStats();renderSonIslemler();renderDaireler();renderGelirler();renderGiderler();renderKasaOzet();renderRapor();renderPuantaj();renderFazlaMesai();renderHizmetSaglayicilar();renderEkBorclar();}
 
 function renderStats(){
   const{odendi,bekleyen,pct}=getAyOdemeOrani();
@@ -921,7 +922,192 @@ window.puantajHucreTikla=async(gun,mevcutKod)=>{
   renderPuantaj();
   try{await setDoc(doc(db,'puantaj','2026'),state.puantaj);}catch(e){}
 };
-window.puantajAyDegistir=yon=>{state.puantajAy=AYLAR[(AYLAR.indexOf(state.puantajAy)+yon+12)%12];renderPuantaj();};
+window.puantajAyDegistir=yon=>{state.puantajAy=AYLAR[(AYLAR.indexOf(state.puantajAy)+yon+12)%12];renderPuantaj();renderFazlaMesai();};
+
+// =====================================================
+// FAZLA MESAİ
+// =====================================================
+function getFMListesi(){return state.fazlaMesai[state.puantajAy]||[];}
+
+function renderFazlaMesai(){
+  const list=getFMListesi();
+  const el=document.getElementById('fm-list');
+  const ozet=document.getElementById('fm-ozet');
+  if(!el)return;
+  if(!list.length){
+    el.innerHTML='<div class="empty-state" style="padding:20px 0"><i class="ti ti-clock" style="font-size:28px;color:#ccc"></i><p style="color:#bbb;font-size:12px;margin-top:6px">Fazla mesai kaydı yok</p></div>';
+    if(ozet)ozet.style.display='none';
+    return;
+  }
+  let topSaat=0,topUcret=0;
+  el.innerHTML=list.map((fm,i)=>{
+    topSaat+=fm.saat;topUcret+=fm.ucret;
+    return `<div class="tx-row">
+      <div class="tx-icon" style="background:#fff8e1"><i class="ti ti-clock" style="color:#b8860b"></i></div>
+      <div class="tx-info">
+        <div class="tx-name">${fm.tarih}${fm.aciklama?' · '+fm.aciklama:''}</div>
+        <div class="tx-sub">${fm.bas} – ${fm.bit} · ${fm.saat} saat</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="tx-amount" style="color:#b8860b">${fmt(fm.ucret)}</div>
+        ${isAdmin()?`<button onclick="silFM(${i})" style="background:#fdecea;border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0"><i class="ti ti-trash" style="color:#c0392b;font-size:14px"></i></button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  if(ozet){
+    ozet.style.display='block';
+    document.getElementById('fm-top-saat').textContent=topSaat+' saat';
+    document.getElementById('fm-top-ucret').textContent=fmt(topUcret);
+  }
+}
+
+window.fmEkle=()=>{
+  if(!isAdmin())return showToast('Yalnızca yönetici veri girebilir.');
+  document.getElementById('fm-tarih').value=today();
+  document.getElementById('fm-bas').value='18:00';
+  document.getElementById('fm-bit').value='21:00';
+  document.getElementById('fm-aciklama').value='';
+  openModal('modal-fm');
+};
+
+window.kaydetFM=async()=>{
+  const tarih=document.getElementById('fm-tarih').value;
+  const bas=document.getElementById('fm-bas').value;
+  const bit=document.getElementById('fm-bit').value;
+  const saatUcret=parseFloat(document.getElementById('fm-saat-ucret').value)||100;
+  const aciklama=document.getElementById('fm-aciklama').value.trim();
+  if(!tarih||!bas||!bit){return showToast('Tarih ve saat alanlarını doldurun.');}
+  const [bH,bM]=bas.split(':').map(Number);
+  const [eH,eM]=bit.split(':').map(Number);
+  let saat=((eH*60+eM)-(bH*60+bM))/60;
+  if(saat<=0){return showToast('Bitiş saati başlangıçtan sonra olmalı.');}
+  saat=Math.round(saat*10)/10;
+  const ucret=Math.round(saat*saatUcret*100)/100;
+  const tarihFmt=tarih.split('-').reverse().join('.');
+  const fm={tarih:tarihFmt,bas,bit,saat,ucret,aciklama};
+  const ay=state.puantajAy;
+  if(!state.fazlaMesai[ay])state.fazlaMesai[ay]=[];
+  state.fazlaMesai[ay].push(fm);
+  try{await setDoc(doc(db,'fazlamesai','2026'),state.fazlaMesai);}catch(e){}
+  closeModal('modal-fm');
+  renderFazlaMesai();
+  showToast(`✓ ${saat} saat mesai kaydedildi (${fmt(ucret)})`);
+};
+
+window.silFM=async(index)=>{
+  if(!confirm('Bu fazla mesai kaydı silinsin mi?'))return;
+  const ay=state.puantajAy;
+  state.fazlaMesai[ay].splice(index,1);
+  try{await setDoc(doc(db,'fazlamesai','2026'),state.fazlaMesai);}catch(e){}
+  renderFazlaMesai();
+  showToast('Silindi');
+};
+
+// =====================================================
+// EXCEL İNDİR — MALİ MÜŞAVİR RAPORU
+// =====================================================
+window.indirPersonelExcel=()=>{
+  const ay=state.puantajAy;
+  const yil=state.puantajYil;
+  const p=personelOzluk;
+  const gun=state.puantaj[ay]||{};
+  const gunSayisi=new Date(yil,AYLAR.indexOf(ay)+1,0).getDate();
+  const stat=getPuantajStat(ay);
+  const fmList=getFMListesi();
+  const topFMSaat=fmList.reduce((a,b)=>a+b.saat,0);
+  const topFMUcret=fmList.reduce((a,b)=>a+b.ucret,0);
+  const maas=parseFloat(p.maas)||0;
+  const maasbrut=parseFloat(p.maasbrut)||0;
+
+  // Puantaj satırları
+  let puantajRows='';
+  for(let g=1;g<=gunSayisi;g++){
+    const kod=gun[g]||'';
+    const label=kod&&PUANTAJ_KODLAR[kod]?PUANTAJ_KODLAR[kod].label:'—';
+    const bgColor=kod==='X'?'#e4f5ec':kod==='P'?'#e3f0ff':kod&&kod!=='-'?'#fde8e8':'#fff';
+    puantajRows+=`<tr><td style="text-align:center;border:1px solid #ddd;padding:4px;font-size:11px">${g}</td><td style="text-align:center;border:1px solid #ddd;padding:4px;font-size:11px;background:${bgColor};font-weight:600">${kod||'—'}</td><td style="border:1px solid #ddd;padding:4px;font-size:11px">${label}</td></tr>`;
+  }
+
+  // Fazla mesai satırları
+  let fmRows='';
+  if(fmList.length){
+    fmList.forEach(fm=>{
+      fmRows+=`<tr><td style="border:1px solid #ddd;padding:4px;font-size:11px">${fm.tarih}</td><td style="text-align:center;border:1px solid #ddd;padding:4px;font-size:11px">${fm.bas}</td><td style="text-align:center;border:1px solid #ddd;padding:4px;font-size:11px">${fm.bit}</td><td style="text-align:center;border:1px solid #ddd;padding:4px;font-size:11px">${fm.saat}</td><td style="text-align:right;border:1px solid #ddd;padding:4px;font-size:11px;font-weight:600;color:#b8860b">${fm.ucret.toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</td><td style="border:1px solid #ddd;padding:4px;font-size:11px">${fm.aciklama||'—'}</td></tr>`;
+    });
+  }else{
+    fmRows='<tr><td colspan="6" style="text-align:center;padding:8px;font-size:11px;color:#aaa">Fazla mesai kaydı bulunmamaktadır.</td></tr>';
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a}h1{font-size:16px;color:#0d5c3a}h2{font-size:13px;color:#555;margin-top:20px}table{border-collapse:collapse;width:100%}th{background:#0d5c3a;color:#fff;padding:6px;font-size:11px}td{padding:5px}tr:nth-child(even){background:#f9f9f9}.toplam{background:#e8f4ee;font-weight:700}</style>
+  </head><body>
+  <div style="text-align:center;border-bottom:3px solid #0d5c3a;padding-bottom:10px;margin-bottom:16px">
+    <h1>AZRA SAHİL SİTESİ — PERSONEL AYLIK RAPORU</h1>
+    <div style="font-size:13px;color:#555">${ay} ${yil} — Düzenleme: ${new Date().toLocaleDateString('tr-TR')}</div>
+  </div>
+
+  <h2>1. PERSONEL BİLGİLERİ</h2>
+  <table>
+    <tr><td style="width:160px;font-weight:600;border:1px solid #ddd;padding:5px">Ad Soyad</td><td style="border:1px solid #ddd;padding:5px">${p.adsoyad||'—'}</td><td style="width:160px;font-weight:600;border:1px solid #ddd;padding:5px">Unvan</td><td style="border:1px solid #ddd;padding:5px">${p.unvan||'—'}</td></tr>
+    <tr><td style="font-weight:600;border:1px solid #ddd;padding:5px">TC Kimlik No</td><td style="border:1px solid #ddd;padding:5px">${p.tc||'—'}</td><td style="font-weight:600;border:1px solid #ddd;padding:5px">SGK Sicil</td><td style="border:1px solid #ddd;padding:5px">${p.sgk||'—'}</td></tr>
+    <tr><td style="font-weight:600;border:1px solid #ddd;padding:5px">İşe Giriş</td><td style="border:1px solid #ddd;padding:5px">${p.giris||'—'}</td><td style="font-weight:600;border:1px solid #ddd;padding:5px">Sigorta Türü</td><td style="border:1px solid #ddd;padding:5px">${p.sigorta||'—'}</td></tr>
+    <tr><td style="font-weight:600;border:1px solid #ddd;padding:5px">Net Maaş</td><td style="border:1px solid #ddd;padding:5px">${maas?maas.toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺':'—'}</td><td style="font-weight:600;border:1px solid #ddd;padding:5px">Brüt Maaş</td><td style="border:1px solid #ddd;padding:5px">${maasbrut?maasbrut.toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺':'—'}</td></tr>
+    <tr><td style="font-weight:600;border:1px solid #ddd;padding:5px">Banka</td><td style="border:1px solid #ddd;padding:5px">${p.banka||'—'}</td><td style="font-weight:600;border:1px solid #ddd;padding:5px">IBAN</td><td style="border:1px solid #ddd;padding:5px">${p.iban||'—'}</td></tr>
+  </table>
+
+  <h2>2. PUANTAJ ÇİZELGESİ — ${ay} ${yil}</h2>
+  <table>
+    <thead><tr><th style="width:40px">Gün</th><th style="width:50px">Kod</th><th>Açıklama</th></tr></thead>
+    <tbody>${puantajRows}</tbody>
+    <tfoot>
+      <tr class="toplam"><td colspan="3" style="border:1px solid #ddd;padding:6px">
+        Çalışma: <b>${stat.calisma}</b> gün &nbsp;|&nbsp;
+        Pazar: <b>${stat.pazar}</b> &nbsp;|&nbsp;
+        Res.Tatil: <b>${stat.rt}</b> &nbsp;|&nbsp;
+        Yıl.İzin: <b>${stat.yi}</b> &nbsp;|&nbsp;
+        İzin: <b>${stat.iz}</b> &nbsp;|&nbsp;
+        Rapor: <b>${stat.rp}</b>
+      </td></tr>
+    </tfoot>
+  </table>
+
+  <h2>3. FAZLA MESAİ — ${ay} ${yil}</h2>
+  <table>
+    <thead><tr><th>Tarih</th><th>Başlangıç</th><th>Bitiş</th><th>Saat</th><th>Ücret</th><th>Açıklama</th></tr></thead>
+    <tbody>${fmRows}</tbody>
+    <tfoot>
+      <tr class="toplam">
+        <td colspan="3" style="border:1px solid #ddd;padding:6px;font-weight:700">TOPLAM</td>
+        <td style="border:1px solid #ddd;padding:6px;text-align:center;font-weight:700">${topFMSaat} saat</td>
+        <td style="border:1px solid #ddd;padding:6px;text-align:right;font-weight:700;color:#b8860b">${topFMUcret.toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</td>
+        <td style="border:1px solid #ddd"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <h2>4. ÜCRET ÖZETİ</h2>
+  <table>
+    <tr><td style="font-weight:600;border:1px solid #ddd;padding:6px">Net Aylık Maaş</td><td style="text-align:right;border:1px solid #ddd;padding:6px">${maas?maas.toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺':'—'}</td></tr>
+    <tr><td style="font-weight:600;border:1px solid #ddd;padding:6px">Fazla Mesai Ücreti</td><td style="text-align:right;border:1px solid #ddd;padding:6px">${topFMUcret.toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</td></tr>
+    <tr class="toplam"><td style="border:1px solid #ddd;padding:8px;font-size:13px">TOPLAM ÖDENECEK</td><td style="text-align:right;border:1px solid #ddd;padding:8px;font-size:14px;color:#0d5c3a">${(maas+topFMUcret).toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</td></tr>
+  </table>
+
+  <div style="margin-top:30px;display:flex;justify-content:space-between;padding-top:20px;border-top:1px solid #ddd">
+    <div style="text-align:center;width:45%"><div style="margin-bottom:40px">İmza</div><div style="border-top:1px solid #555;padding-top:6px;font-size:11px">Personel: ${p.adsoyad||'............'}</div></div>
+    <div style="text-align:center;width:45%"><div style="margin-bottom:40px">İmza / Mühür</div><div style="border-top:1px solid #555;padding-top:6px;font-size:11px">Yönetici: Ferhat Özdal</div></div>
+  </div>
+  <div style="text-align:center;font-size:10px;color:#aaa;margin-top:20px">Bu belge Azra Sahil Sitesi Yönetim Sistemi tarafından ${new Date().toLocaleString('tr-TR')} tarihinde oluşturulmuştur.</div>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`personel-raporu-${ay}-${yil}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✓ ${ay} ${yil} personel raporu indirildi`);
+};
 
 // RAPOR
 let raporAy=BUGUN_AY;
