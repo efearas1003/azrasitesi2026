@@ -350,6 +350,9 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ===== İZLEYİCİ GİZLEME ===== */
+.nav-item.admin-only { display: none; }
+
 /* ===== PANELLERİN SABİT BAŞLIĞI ===== */
 .panel-sticky-header {
   position: sticky;
