@@ -204,6 +204,10 @@ window.doLogin=()=>{
     document.getElementById('screen-main').classList.add('active');
     document.getElementById('topbar-badge').textContent=isAdmin()?'Yönetici':'İzleyici';
     document.getElementById('fab').style.display=isAdmin()?'flex':'none';
+    // İzleyici: sadece Ana Sayfa ve Daireler görünsün
+    document.querySelectorAll('.admin-only').forEach(el=>{
+      el.style.display=isAdmin()?'flex':'none';
+    });
     initDaireSelect();setDefaultDates();startFirebaseListeners();loadOzluk();
   }else{e.style.display='block';}
 };
@@ -1082,6 +1086,11 @@ window.yilSonuRaporu=()=>{
 // NAVİGASYON
 let activeTab='home',activeSubTab='gelirler';
 window.switchTab=tab=>{
+  // İzleyici koruma: sadece home ve daireler
+  if(!isAdmin()&&tab!=='home'&&tab!=='daireler'){
+    showToast('Bu sayfa yalnızca yöneticiye açıktır.');
+    return;
+  }
   activeTab=tab;
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
