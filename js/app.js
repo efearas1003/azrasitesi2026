@@ -221,10 +221,11 @@ const fmtPara=v=>v?parseFloat(v).toLocaleString('tr-TR',{minimumFractionDigits:2
 const getDaire=no=>{const base=DAIRELER.find(x=>x.no===no);return{...base,...(daireOverrides[no]||{})};};
 const getDaireTahsilat=no=>state.gelirler.filter(g=>g.daireNo===no).reduce((a,b)=>a+b.tutar,0);
 const getDaireEkBorc=no=>{
-  return ekBorclar.filter(b=>(b.daireNo===no||b.tumDaireler)&&!b.dinamik).reduce((a,b)=>a+b.tutar,0);
+  // Sadece dinamik (Temmuz+) borçları say - Ocak-Haziran başlangıç borcunda zaten var
+  return ekBorclar.filter(b=>(b.daireNo===no||b.tumDaireler)&&b.dinamik).reduce((a,b)=>a+b.tutar,0);
 };
-// Daire bakiye borcu: başlangıç borcu + ek borçlar - tahsilatlar
-const getDaireBakiyeBorc=no=>(getDaireBaslangicBorc(no)+getDaireEkBorc(no)+getDaireDinamikBorc(no))-getDaireTahsilat(no);
+// Daire bakiye borcu: başlangıç borcu + dinamik borçlar - tahsilatlar
+const getDaireBakiyeBorc=no=>(getDaireBaslangicBorc(no)+getDaireEkBorc(no))-getDaireTahsilat(no);
 // Tahsilat: o ay içinde gerçekleşen (tarih ayı esas), Gelirler listesi için dönem bazlı borç düşümü ayrı
 const getAyTahsilat=ay=>{
   // Önce o ay içinde tahsil edilen tüm gelirleri topla (tarih ayı = ay)
@@ -727,7 +728,7 @@ window.openDaireModal=no=>{
     ${kisiBlok}${contactHtml}
     <div class="stat-grid" style="margin-bottom:14px">
       <div class="stat-card"><div class="stat-label">Toplam Borç</div><div class="stat-value" style="font-size:16px">${fmt(getDaireBaslangicBorc(no))}</div></div>
-      <div class="stat-card"><div class="stat-label">Ek Borç</div><div class="stat-value" style="font-size:16px;color:#b8860b">${fmt(getDaireEkBorc(no)+getDaireDinamikBorc(no))}</div></div>
+      <div class="stat-card"><div class="stat-label">Ek Borç (Tem+)</div><div class="stat-value" style="font-size:16px;color:#b8860b">${fmt(getDaireEkBorc(no))}</div></div>
       <div class="stat-card"><div class="stat-label">Tahsilat</div><div class="stat-value green" style="font-size:16px">${fmt(tahsilat)}</div></div>
       <div class="stat-card"><div class="stat-label">Bakiye Borç</div><div class="stat-value ${borc>0?'red':'green'}" style="font-size:16px">${borc>0?fmt(borc):'✓ Yok'}</div></div>
     </div>
@@ -1474,7 +1475,6 @@ function renderEkBorclar(){
     el.innerHTML='<div class="empty-state"><i class="ti ti-receipt-off"></i><p>Henüz ek borç eklenmemiş</p></div>';
     return;
   }
-  // Grupla: açıklama + ay'a göre
   const gruplar={};
   ekBorclar.forEach(b=>{
     const key=b.aciklama+'|'+b.ay;
@@ -1482,7 +1482,8 @@ function renderEkBorclar(){
     if(b.daireNo)gruplar[key].daireler.push(b.daireNo);
     gruplar[key].idler.push(b.id);
   });
-  el.innerHTML=Object.values(gruplar).map(g=>`
+  // idler'i data attribute olarak sakla
+  el.innerHTML=Object.values(gruplar).map((g,i)=>`
     <div class="daire-item" style="flex-direction:column;align-items:stretch;gap:8px">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:40px;height:40px;border-radius:10px;background:#fff3cd;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -1492,12 +1493,22 @@ function renderEkBorclar(){
           <div style="font-size:14px;font-weight:700;color:#1a1a1a">${g.aciklama}</div>
           <div style="font-size:12px;color:#888">${g.ay} · ${g.tumDaireler?'Tüm Daireler':g.daireler.length+' daire'} · ${fmt(g.tutar)}</div>
         </div>
-        ${isAdmin()?`<button onclick="g.idler.forEach(id=>silEkBorc(id))" style="background:#fdecea;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        ${isAdmin()?`<button onclick="silEkBorcGrup('${g.idler.join(',')}')" style="background:#fdecea;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer">
           <i class="ti ti-trash" style="color:#c0392b;font-size:15px"></i>
         </button>`:''}
       </div>
     </div>`).join('');
 }
+
+window.silEkBorcGrup=async(idlerStr)=>{
+  if(!confirm('Bu borç grubu silinsin mi?'))return;
+  const idler=idlerStr.split(',');
+  ekBorclar=ekBorclar.filter(b=>!idler.includes(b.id));
+  try{await setDoc(doc(db,'ekborclar','liste'),{liste:ekBorclar});}catch(e){}
+  renderEkBorclar();
+  renderAll();
+  showToast('✓ Borç grubu silindi');
+};
 
 function renderEbDaireList(){
   const el=document.getElementById('eb-daire-list');if(!el)return;
@@ -1515,6 +1526,51 @@ window.openEkBorc=()=>{
   renderEbDaireList();
   openModal('modal-eb');
 };
+
+// AYLIK BORÇLANDIRMA — Tüm daireler tek tıkla
+window.aylikBorclandir=async()=>{
+  if(!isAdmin())return showToast('Yalnızca yönetici borçlandırabilir.');
+  const ay=document.getElementById('ayborc-ay').value;
+  const aidat=parseFloat(document.getElementById('ayborc-aidat').value)||0;
+  const diger=parseFloat(document.getElementById('ayborc-diger').value)||0;
+  const toplam=aidat+diger;
+  if(!toplam)return showToast('Tutar sıfır olamaz.');
+  // Zaten bu ay borçlandırılmış mı kontrol et
+  const mevcutVar=ekBorclar.some(b=>b.ay===ay&&b.tumDaireler&&b.dinamik);
+  if(mevcutVar){
+    if(!confirm(`${ay} için zaten borçlandırma yapılmış. Tekrar eklensin mi?`))return;
+  }
+  if(!confirm(`${ay} ayı için ${fmt(toplam)} borç TÜM dairelere eklensin mi?`))return;
+  const yeniBorclar=[];
+  if(aidat>0){
+    yeniBorclar.push({id:'ab'+Date.now()+'a',aciklama:'Aidat — '+ay,tutar:aidat,ay,tumDaireler:true,daireNo:null,dinamik:true});
+  }
+  if(diger>0){
+    yeniBorclar.push({id:'ab'+Date.now()+'d',aciklama:'Havuz/Diğer — '+ay,tutar:diger,ay,tumDaireler:true,daireNo:null,dinamik:true});
+  }
+  ekBorclar=[...ekBorclar,...yeniBorclar];
+  try{await setDoc(doc(db,'ekborclar','liste'),{liste:ekBorclar});}catch(e){}
+  renderAll();
+  renderEkBorclar();
+  showToast(`✓ ${ay} borçlandırması tamamlandı — ${fmt(toplam)} × 58 daire`);
+};
+
+// Preview güncelle
+document.addEventListener('DOMContentLoaded',()=>{
+  ['ayborc-aidat','ayborc-diger'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('input',()=>{
+      const a=parseFloat(document.getElementById('ayborc-aidat').value)||0;
+      const d=parseFloat(document.getElementById('ayborc-diger').value)||0;
+      const pa=document.getElementById('ayborc-preview-aidat');
+      const pd=document.getElementById('ayborc-preview-diger');
+      const pt=document.getElementById('ayborc-preview-toplam');
+      if(pa)pa.textContent='₺'+a.toLocaleString('tr-TR');
+      if(pd)pd.textContent='₺'+d.toLocaleString('tr-TR');
+      if(pt)pt.textContent='₺'+(a+d).toLocaleString('tr-TR');
+    });
+  });
+});
 
 // MODAL / TOAST
 window.openModal=id=>document.getElementById(id)?.classList.add('open');
