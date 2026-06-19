@@ -1434,7 +1434,7 @@ window.kaydetEkBorc=async()=>{
   const yeniBorclar=[];
   aylar.forEach(ay=>{
     // Temmuz ve sonrası dinamik borçlandırma
-    const dinamik=AYLAR.indexOf(ay)>=6;
+    const dinamik=AYLAR.indexOf(ay)>=1;
     if(tumDaireler){
       yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:true,daireNo:null,dinamik});
     } else {
