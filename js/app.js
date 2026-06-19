@@ -195,11 +195,11 @@ let daireOverrides={}, hizmetSaglayicilar=[], ekBorclar=[];
 let state={
   user:null,gelirler:[],giderler:[],puantaj:{},fazlaMesai:{},
   kasaOnceki:[
-    {ay:'OCAK',acilis:0,gelir:81200,gider:81200,devreden:0},
-    {ay:'ŞUBAT',acilis:0,gelir:79800,gider:79800,devreden:0},
-    {ay:'MART',acilis:0,gelir:79800,gider:79800,devreden:0},
-    {ay:'NİSAN',acilis:0,gelir:79800,gider:78400,devreden:1400},
-    {ay:'MAYIS',acilis:1400,gelir:68600,gider:58410.21,devreden:11589.79},
+    {ay:'OCAK',  acilis:0,        gelir:79800,    gider:72791.55, devreden:7008.45},
+    {ay:'ŞUBAT', acilis:7008.45,  gelir:78400,    gider:82557.38, devreden:2851.07},
+    {ay:'MART',  acilis:2851.07,  gelir:77000,    gider:72028.07, devreden:7823.00},
+    {ay:'NİSAN', acilis:7823.00,  gelir:77000,    gider:75310.13, devreden:9512.87},
+    {ay:'MAYIS', acilis:9512.87,  gelir:67200,    gider:74601.32, devreden:2111.55},
   ],
   unsubGelir:null,unsubGider:null,unsubPuantaj:null,
   puantajAy:BUGUN_AY,puantajYil:2026,
@@ -248,9 +248,9 @@ const getAyGider=ay=>{
   }).reduce((a,b)=>a+b.tutar,0);
 };
 const getKasaBakiye=()=>{
-  // Mayıs sonu devreden + Haziran gelir - Haziran gider
-  const mayisDevreden=11589.79;
-  return mayisDevreden+getAyTahsilat('HAZİRAN')-getAyGider('HAZİRAN');
+  // Haziran açılış kasası (Mayıs devreden) + Haziran gelir - Haziran gider
+  const haziranAcilis=2111.55;
+  return haziranAcilis+getAyTahsilat('HAZİRAN')-getAyGider('HAZİRAN');
 };
 const getTotalBorc=()=>{
   return DAIRELER.reduce((acc,d)=>{
@@ -1469,6 +1469,9 @@ window.ebTumDegistir=()=>{
 window.ebDaireTumSec=()=>document.querySelectorAll('.eb-daire-cb').forEach(cb=>cb.checked=true);
 window.ebDaireTemizle=()=>document.querySelectorAll('.eb-daire-cb').forEach(cb=>cb.checked=false);
 
+// EkBorc id haritası - render sonrası silme için
+const _ebGrupMap={};
+
 function renderEkBorclar(){
   const el=document.getElementById('eb-list');if(!el)return;
   if(!ekBorclar.length){
@@ -1482,7 +1485,10 @@ function renderEkBorclar(){
     if(b.daireNo)gruplar[key].daireler.push(b.daireNo);
     gruplar[key].idler.push(b.id);
   });
-  // idler'i data attribute olarak sakla
+  // id haritasını güncelle
+  Object.keys(_ebGrupMap).forEach(k=>delete _ebGrupMap[k]);
+  Object.entries(gruplar).forEach(([key,g],i)=>{_ebGrupMap['ebg'+i]=g.idler;});
+
   el.innerHTML=Object.values(gruplar).map((g,i)=>`
     <div class="daire-item" style="flex-direction:column;align-items:stretch;gap:8px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -1493,18 +1499,19 @@ function renderEkBorclar(){
           <div style="font-size:14px;font-weight:700;color:#1a1a1a">${g.aciklama}</div>
           <div style="font-size:12px;color:#888">${g.ay} · ${g.tumDaireler?'Tüm Daireler':g.daireler.length+' daire'} · ${fmt(g.tutar)}</div>
         </div>
-        ${isAdmin()?`<button onclick="silEkBorcGrup('${g.idler.join(',')}')" style="background:#fdecea;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        ${isAdmin()?`<button onclick="silEkBorcGrup('ebg${i}')" style="background:#fdecea;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer">
           <i class="ti ti-trash" style="color:#c0392b;font-size:15px"></i>
         </button>`:''}
       </div>
     </div>`).join('');
 }
 
-window.silEkBorcGrup=async(idlerStr)=>{
+window.silEkBorcGrup=async(grupKey)=>{
   if(!confirm('Bu borç grubu silinsin mi?'))return;
-  const idler=idlerStr.split(',');
+  const idler=_ebGrupMap[grupKey];
+  if(!idler||!idler.length){return showToast('Kayıt bulunamadı.');}
   ekBorclar=ekBorclar.filter(b=>!idler.includes(b.id));
-  try{await setDoc(doc(db,'ekborclar','liste'),{liste:ekBorclar});}catch(e){}
+  try{await setDoc(doc(db,'ekborclar','liste'),{liste:ekBorclar});}catch(e){console.error('Silme hatası:',e);}
   renderEkBorclar();
   renderAll();
   showToast('✓ Borç grubu silindi');
