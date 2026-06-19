@@ -20,6 +20,81 @@ const AYLAR = ['OCAK','ŞUBAT','MART','NİSAN','MAYIS','HAZİRAN','TEMMUZ','AĞU
 const AIDAT = 1400, DIGER_BORC = 1600, YILLIK_AIDAT = 8400;
 const BUGUN_AY = AYLAR[new Date().getMonth()];
 
+// Her dairenin Ocak-Haziran dönemi başlangıç borcu (tabloya göre)
+// Boş aylar = o ay borçlandırılmamış (kiracı yok, muaf vs.)
+const DAIRE_BASLANGIC_BORC = {
+   1:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+   2:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:1600},
+   3:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+   4:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+   5:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+   6:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:1400,HAZİRAN:3000},
+   7:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+   8:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+   9:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  10:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  11:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  12:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  13:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:1600},
+  14:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:1400,HAZİRAN:3000},
+  15:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  16:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  17:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  18:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  19:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  20:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:1400,MAYIS:1400,HAZİRAN:3000},
+  21:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  22:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  23:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  24:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  25:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  26:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:1600},
+  27:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  28:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  29:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  30:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  31:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  32:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:1400,HAZİRAN:3000},
+  33:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  34:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  35:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:1400,HAZİRAN:3000},
+  36:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  37:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  38:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  39:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  40:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  41:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  42:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  43:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:1600},
+  44:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  45:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  46:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:1600},
+  47:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  48:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  49:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:1400,HAZİRAN:3000},
+  50:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  51:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  52:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:1400,HAZİRAN:3000},
+  53:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  54:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  55:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:0},
+  56:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  57:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+  58:{OCAK:0,ŞUBAT:0,MART:0,NİSAN:0,MAYIS:0,HAZİRAN:3000},
+};
+
+// Dairenin toplam başlangıç borcunu hesapla (tüm aylar toplamı)
+const getDaireBaslangicBorc=no=>{
+  const aylar=DAIRE_BASLANGIC_BORC[no];
+  if(!aylar)return 0;
+  return Object.values(aylar).reduce((a,b)=>a+b,0);
+};
+
+// Gelecekte yeni ay borçlandırması dinamik eklenince kullanılacak
+const getDaireDinamikBorc=no=>{
+  return ekBorclar.filter(b=>(b.daireNo===no||b.tumDaireler)&&b.dinamik).reduce((a,b)=>a+b.tutar,0);
+};
+
 const GIDER_KATEGORILER = [
   { grup:'PERSONEL GİDERLERİ', renk:'#c0392b', kalemler:[
     'Maaş / Avans / İkramiye vs.',
@@ -146,9 +221,10 @@ const fmtPara=v=>v?parseFloat(v).toLocaleString('tr-TR',{minimumFractionDigits:2
 const getDaire=no=>{const base=DAIRELER.find(x=>x.no===no);return{...base,...(daireOverrides[no]||{})};};
 const getDaireTahsilat=no=>state.gelirler.filter(g=>g.daireNo===no).reduce((a,b)=>a+b.tutar,0);
 const getDaireEkBorc=no=>{
-  return ekBorclar.filter(b=>b.daireNo===no||b.tumDaireler).reduce((a,b)=>a+b.tutar,0);
+  return ekBorclar.filter(b=>(b.daireNo===no||b.tumDaireler)&&!b.dinamik).reduce((a,b)=>a+b.tutar,0);
 };
-const getDaireBakiyeBorc=no=>(YILLIK_AIDAT+DIGER_BORC+getDaireEkBorc(no))-getDaireTahsilat(no);
+// Daire bakiye borcu: başlangıç borcu + ek borçlar - tahsilatlar
+const getDaireBakiyeBorc=no=>(getDaireBaslangicBorc(no)+getDaireEkBorc(no)+getDaireDinamikBorc(no))-getDaireTahsilat(no);
 // Tahsilat: o ay içinde gerçekleşen (tarih ayı esas), Gelirler listesi için dönem bazlı borç düşümü ayrı
 const getAyTahsilat=ay=>{
   // Önce o ay içinde tahsil edilen tüm gelirleri topla (tarih ayı = ay)
@@ -625,7 +701,13 @@ window.openDaireModal=no=>{
   const tahsilat=getDaireTahsilat(no);
   const borc=getDaireBakiyeBorc(no);
   const odenenAylar=state.gelirler.filter(g=>g.daireNo===no&&g.aciklama==='Aidat Tahsilatı').map(g=>g.donem);
-  const ayHtml=AYLAR.map(ay=>{const paid=odenenAylar.includes(ay);return `<div class="month-chip ${paid?'paid':''}">${ay.slice(0,3)}<span class="chip-label">${paid?'✓':'—'}</span></div>`;}).join('');
+  const daireAyBorclar=DAIRE_BASLANGIC_BORC[no]||{};
+  const ayHtml=AYLAR.map(ay=>{
+    const paid=odenenAylar.includes(ay);
+    const borcVar=(daireAyBorclar[ay]||0)>0;
+    if(!borcVar)return `<div class="month-chip" style="opacity:0.35">${ay.slice(0,3)}<span class="chip-label">—</span></div>`;
+    return `<div class="month-chip ${paid?'paid':''}">${ay.slice(0,3)}<span class="chip-label">${paid?'✓':'!'}</span></div>`;
+  }).join('');
   let kisiBlok='';
   if(d.durum==='KİRACI'){
     kisiBlok=`<div style="margin-bottom:14px"><div style="font-size:20px;font-weight:800;color:#1a1a1a;margin-bottom:4px">${d.sakin||'—'}</div><span class="badge yellow-badge">Kiracı</span>${d.sakintl?`<div style="font-size:13px;color:#555;margin-top:4px"><i class="ti ti-phone"></i> ${d.sakintl}</div>`:''}</div>${d.malik?`<div style="padding:10px;background:#f8f8f8;border-radius:10px;margin-bottom:14px"><div style="font-size:11px;color:#aaa;margin-bottom:2px">EV SAHİBİ</div><div style="font-size:14px;color:#999;font-weight:500">${d.malik}</div>${d.maliktl?`<div style="font-size:12px;color:#bbb">${d.maliktl}</div>`:''}</div>`:''}`;
@@ -644,8 +726,8 @@ window.openDaireModal=no=>{
     </div>
     ${kisiBlok}${contactHtml}
     <div class="stat-grid" style="margin-bottom:14px">
-      <div class="stat-card"><div class="stat-label">Aidat+Diğer Borç</div><div class="stat-value" style="font-size:16px">${fmt(YILLIK_AIDAT+DIGER_BORC)}</div></div>
-      <div class="stat-card"><div class="stat-label">Ek Borç</div><div class="stat-value" style="font-size:16px;color:#b8860b">${fmt(getDaireEkBorc(no))}</div></div>
+      <div class="stat-card"><div class="stat-label">Toplam Borç</div><div class="stat-value" style="font-size:16px">${fmt(getDaireBaslangicBorc(no))}</div></div>
+      <div class="stat-card"><div class="stat-label">Ek Borç</div><div class="stat-value" style="font-size:16px;color:#b8860b">${fmt(getDaireEkBorc(no)+getDaireDinamikBorc(no))}</div></div>
       <div class="stat-card"><div class="stat-label">Tahsilat</div><div class="stat-value green" style="font-size:16px">${fmt(tahsilat)}</div></div>
       <div class="stat-card"><div class="stat-label">Bakiye Borç</div><div class="stat-value ${borc>0?'red':'green'}" style="font-size:16px">${borc>0?fmt(borc):'✓ Yok'}</div></div>
     </div>
@@ -671,13 +753,11 @@ window.openEkstre=no=>{
   const tel=d?(d.sakintl||d.maliktl||'').replace(/\s/g,''):'';
   const islemler=state.gelirler.filter(g=>g.daireNo===no);
   let txRows=islemler.length?islemler.map(g=>`<div class="ekstre-row"><div><div class="ekstre-label">${g.tarih} · ${g.donem}</div><div style="font-size:13px;color:#1a1a1a;margin-top:2px">${g.aciklama}</div></div><div class="ekstre-value green">+${fmt(g.tutar)}</div></div>`).join(''):'<div class="empty-state" style="padding:16px"><p>İşlem yok</p></div>';
-  const ekstreMetin=encodeURIComponent(`📋 AZRA SAHİL SİTESİ — DAİRE ${no}\n👤 ${name}\n\n📌 Toplam Borç: ${fmt(YILLIK_AIDAT+DIGER_BORC)}\n✅ Tahsilat: ${fmt(tahsilat)}\n⚠️ Bakiye: ${fmt(borc)}`);
+  const ekstreMetin=encodeURIComponent(`📋 AZRA SAHİL SİTESİ — DAİRE ${no}\n👤 ${name}\n\n📌 Toplam Borç: ${fmt(getDaireBaslangicBorc(no))}\n✅ Tahsilat: ${fmt(tahsilat)}\n⚠️ Bakiye: ${fmt(borc)}`);
   document.getElementById('modal-ekstre-inner').innerHTML=`
     <div class="sheet-handle"></div>
     <div class="ekstre-header"><div style="font-size:16px;font-weight:700">Daire ${no} — Ekstre</div><div style="font-size:12px;opacity:0.8">${name} · Kat ${d?.kat||'—'}</div></div>
-    <div class="ekstre-row"><div class="ekstre-label">Yıllık Aidat</div><div class="ekstre-value">${fmt(YILLIK_AIDAT)}</div></div>
-    <div class="ekstre-row"><div class="ekstre-label">Diğer Borç</div><div class="ekstre-value">${fmt(DIGER_BORC)}</div></div>
-    <div class="ekstre-row"><div class="ekstre-label">Toplam Borç</div><div class="ekstre-value red">${fmt(YILLIK_AIDAT+DIGER_BORC)}</div></div>
+    <div class="ekstre-row"><div class="ekstre-label">Toplam Borç</div><div class="ekstre-value red">${fmt(getDaireBaslangicBorc(no))}</div></div>
     <div class="ekstre-row"><div class="ekstre-label">Tahsilat</div><div class="ekstre-value green">${fmt(tahsilat)}</div></div>
     <div class="ekstre-row" style="margin-bottom:14px"><div class="ekstre-label" style="font-weight:700">Bakiye Borç</div><div class="ekstre-value ${borc>0?'red':'green'}" style="font-size:18px">${borc>0?fmt(borc):'✓ Borç Yok'}</div></div>
     <div style="font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:8px">İşlem Hareketleri</div>
@@ -706,9 +786,7 @@ window.indirEkstre=async(no)=>{
     <div style="font-size:15px;font-weight:700;margin-bottom:4px">${name}</div>
     <div style="font-size:12px;color:#666;margin-bottom:16px">Kat ${d?.kat||'—'} · ${d?.durum||'—'}</div>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
-      <tr style="background:#f5f5f5"><td style="padding:8px">Yıllık Aidat Borcu</td><td style="padding:8px;text-align:right;font-weight:600">${fmt(YILLIK_AIDAT)}</td></tr>
-      <tr><td style="padding:8px">Diğer Borç</td><td style="padding:8px;text-align:right">${fmt(DIGER_BORC)}</td></tr>
-      <tr style="background:#f5f5f5"><td style="padding:8px">Toplam Borç</td><td style="padding:8px;text-align:right;font-weight:700;color:#c0392b">${fmt(YILLIK_AIDAT+DIGER_BORC)}</td></tr>
+      <tr style="background:#f5f5f5"><td style="padding:8px">Toplam Borç</td><td style="padding:8px;text-align:right;font-weight:700;color:#c0392b">${fmt(getDaireBaslangicBorc(no))}</td></tr>
       <tr><td style="padding:8px">Yapılan Tahsilat</td><td style="padding:8px;text-align:right;font-weight:700;color:#0d5c3a">${fmt(tahsilat)}</td></tr>
       <tr style="background:${borc>0?'#fdecea':'#e4f5ec'}"><td style="padding:8px;font-weight:700">BAKİYE BORÇ</td><td style="padding:8px;text-align:right;font-weight:700;font-size:16px;color:${borc>0?'#c0392b':'#0d5c3a'}">${borc>0?fmt(borc):'✓ Borç Yok'}</td></tr>
     </table>
@@ -1354,11 +1432,13 @@ window.kaydetEkBorc=async()=>{
   if(!tumDaireler&&!seciliDaireler.length)return showToast('Daire seçin veya Tüm Daireler seçeneğini işaretleyin.');
   const yeniBorclar=[];
   aylar.forEach(ay=>{
+    // Temmuz ve sonrası dinamik borçlandırma
+    const dinamik=AYLAR.indexOf(ay)>=6;
     if(tumDaireler){
-      yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:true,daireNo:null});
+      yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:true,daireNo:null,dinamik});
     } else {
       seciliDaireler.forEach(no=>{
-        yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:false,daireNo:no});
+        yeniBorclar.push({id:'eb'+Date.now()+Math.random(),aciklama,tutar,ay,tumDaireler:false,daireNo:no,dinamik});
       });
     }
   });
